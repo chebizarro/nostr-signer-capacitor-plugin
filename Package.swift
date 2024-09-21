@@ -7,22 +7,22 @@ let package = Package(
     products: [
         .library(
             name: "NostrSignerCapacitorPlugin",
-            targets: ["NostrSignerPluginPlugin"])
+            targets: ["NostrSignerPlugin"])
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", branch: "main")
     ],
     targets: [
         .target(
-            name: "NostrSignerPluginPlugin",
+            name: "NostrSignerPlugin",
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm")
             ],
-            path: "ios/Sources/NostrSignerPluginPlugin"),
+            path: "ios/Sources/NostrSignerPlugin"),
         .testTarget(
             name: "NostrSignerPluginPluginTests",
-            dependencies: ["NostrSignerPluginPlugin"],
-            path: "ios/Tests/NostrSignerPluginPluginTests")
+            dependencies: ["NostrSignerPlugin"],
+            path: "ios/Tests/NostrSignerPluginTests")
     ]
 )
