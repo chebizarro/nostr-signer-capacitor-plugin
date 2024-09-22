@@ -17,7 +17,7 @@ import com.getcapacitor.PluginMethod;
 
 import java.util.List;
 
-@CapacitorPlugin(name = "NostrSigner")
+@CapacitorPlugin(name = "NostrSignerPlugin")
 public class NostrSignerPlugin extends Plugin {
 
 	protected PluginCall savedCall;
