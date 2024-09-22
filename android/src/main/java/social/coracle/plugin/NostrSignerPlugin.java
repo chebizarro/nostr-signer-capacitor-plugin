@@ -3,14 +3,15 @@ package social.coracle.plugin;
 import android.content.Intent;
 import android.content.Context;
 import android.net.Uri;
-import android.database.Cursor;
 import android.app.Activity;
-import android.widget.Toast;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
+import androidx.activity.result.ActivityResult;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -66,7 +67,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.setPackage(packageName);
 		PackageManager packageManager = context.getPackageManager();
 		List<ResolveInfo> activities = packageManager.queryIntentActivities(intent, 0);
-		return activities.size() > 0;
+		return !activities.isEmpty();
 	}
 
 	@PluginMethod
@@ -82,7 +83,22 @@ public class NostrSignerPlugin extends Plugin {
 		intent.setPackage(signerPackageName);
 		intent.putExtra("type", "get_public_key");
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "getPublicKeyResult");
+	}
+
+	@ActivityCallback
+	private void getPublicKeyResult(PluginCall call, ActivityResult result) {
+		if (result.getResultCode() == Activity.RESULT_CANCELED) {
+			call.reject("Activity Cancelled");
+		} else {
+			Intent data = result.getData();
+			JSObject ret = new JSObject();
+			String npub = data.getStringExtra("signature");
+			String packageName = data.getStringExtra("package");
+			ret.put("npub", npub);
+			ret.put("package", packageName);
+			call.resolve(ret);
+		}
 	}
 
 	@PluginMethod
@@ -109,7 +125,24 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("id", eventId);
 		intent.putExtra("current_user", npub);
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "signEventActivity");
+	}
+	
+	@ActivityCallback
+	private void signEventActivity(PluginCall call, ActivityResult result) {
+		if (result.getResultCode() == Activity.RESULT_CANCELED) {
+			call.reject("Activity Cancelled");
+		} else {
+			Intent data = result.getData();
+			JSObject ret = new JSObject();
+			String signature = data.getStringExtra("signature");
+			String id = data.getStringExtra("id");
+			String signedEventJson = data.getStringExtra("event");
+			ret.put("signature", signature);
+			ret.put("id", id);
+			ret.put("event", signedEventJson);
+			call.resolve(ret);
+		}
 	}
 
 	@PluginMethod
@@ -138,7 +171,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "handleActivityResult");
 	}
 
 	@PluginMethod
@@ -167,7 +200,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "handleActivityResult");
 	}
 
 	@PluginMethod
@@ -196,7 +229,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "handleActivityResult");
 	}
 
 	@PluginMethod
@@ -225,7 +258,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "handleActivityResult");
 	}
 
 	@PluginMethod
@@ -252,11 +285,12 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("id", id);
 		intent.putExtra("current_user", npub);
 
-		startActivityForResult(call, intent, SIGNER_REQUEST_CODE);
+		startActivityForResult(call, intent, "handleActivityResult");
 	}
 
-	@Override
-	protected void handleOnActivityResult(int requestCode, int resultCode, Intent data) {
+
+    @ActivityCallback
+	private void handleActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == SIGNER_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK && savedCall != null) {
 				String type = data.getStringExtra("type");
