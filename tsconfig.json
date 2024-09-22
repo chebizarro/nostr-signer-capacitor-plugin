@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "declaration": true,
     "esModuleInterop": true,
@@ -12,9 +13,12 @@
     "noUnusedParameters": true,
     "outDir": "dist/esm",
     "pretty": true,
+    "rootDir": "src",
     "sourceMap": true,
     "strict": true,
     "target": "es2017"
   },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
   "files": ["src/index.ts"]
 }

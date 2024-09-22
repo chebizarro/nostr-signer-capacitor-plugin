@@ -25,14 +25,6 @@ public class NostrSignerPlugin extends Plugin {
 	protected static final int SIGNER_REQUEST_CODE = 1001;
 	private static String signerPackageName = null;
 
-	public static void setSignerPackageName(String packageName) {
-		signerPackageName = packageName;
-	}
-
-	public static String getSignerPackageName() {
-		return signerPackageName;
-	}
-
 	@PluginMethod
 	public void setPackageName(PluginCall call) {
 		String packageName = call.getString("packageName");
