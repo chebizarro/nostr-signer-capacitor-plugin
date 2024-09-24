@@ -18,12 +18,16 @@ import com.getcapacitor.PluginMethod;
 
 import java.util.List;
 
+import android.util.Log;
+
 @CapacitorPlugin(name = "NostrSignerPlugin")
 public class NostrSignerPlugin extends Plugin {
 
 	protected PluginCall savedCall;
 	protected static final int SIGNER_REQUEST_CODE = 1001;
 	private static String signerPackageName = null;
+
+	private static final String TAG = "Nostr Signer";
 
 	@PluginMethod
 	public void setPackageName(PluginCall call) {
@@ -40,10 +44,6 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void isExternalSignerInstalled(PluginCall call) {
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
-			call.reject("Signer package name not set. Call setPackageName first.");
-			return;
-		}
 
 		Context context = getContext();
 		boolean isInstalled = isExternalSignerInstalled(context, signerPackageName);
@@ -103,10 +103,10 @@ public class NostrSignerPlugin extends Plugin {
 		}
 
 		String eventJson = call.getString("eventJson");
-		String eventId = call.getString("eventId");
-		String npub = call.getString("npub");
+        String eventId = call.getString("eventId");
+        String npub = call.getString("npub");
 
-		if (eventJson == null || eventId == null || npub == null) {
+        if (eventJson == null || eventId == null || npub == null) {
 			call.reject("Missing parameters");
 			return;
 		}
@@ -149,7 +149,7 @@ public class NostrSignerPlugin extends Plugin {
 		String plainText = call.getString("plainText");
 		String pubKey = call.getString("pubKey");
 		String npub = call.getString("npub");
-		String id = call.getString("id", "some_id");
+		String id = call.getString("id");
 
 		if (plainText == null || pubKey == null || npub == null) {
 			call.reject("Missing parameters");
@@ -163,7 +163,22 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, "handleActivityResult");
+		startActivityForResult(call, intent, "encryptEventActivity");
+	}
+
+	@ActivityCallback
+	private void encryptEventActivity(PluginCall call, ActivityResult result) {
+		if (result.getResultCode() == Activity.RESULT_CANCELED) {
+			call.reject("Activity Cancelled");
+		} else {
+			Intent data = result.getData();
+			JSObject ret = new JSObject();
+			String res = data.getStringExtra("signature");
+			String resultId = data.getStringExtra("id");
+			ret.put("result", res);
+			ret.put("id", resultId);
+			call.resolve(ret);
+		}
 	}
 
 	@PluginMethod
@@ -192,7 +207,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, "handleActivityResult");
+		startActivityForResult(call, intent, "encryptEventActivity");
 	}
 
 	@PluginMethod
@@ -221,7 +236,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, "handleActivityResult");
+		startActivityForResult(call, intent, "encryptEventActivity");
 	}
 
 	@PluginMethod
@@ -250,7 +265,7 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("current_user", npub);
 		intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, "handleActivityResult");
+		startActivityForResult(call, intent, "encryptEventActivity");
 	}
 
 	@PluginMethod
@@ -277,50 +292,8 @@ public class NostrSignerPlugin extends Plugin {
 		intent.putExtra("id", id);
 		intent.putExtra("current_user", npub);
 
-		startActivityForResult(call, intent, "handleActivityResult");
+		startActivityForResult(call, intent, "encryptEventActivity");
 	}
 
 
-    @ActivityCallback
-	private void handleActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == SIGNER_REQUEST_CODE) {
-			if (resultCode == Activity.RESULT_OK && savedCall != null) {
-				String type = data.getStringExtra("type");
-				JSObject ret = new JSObject();
-
-				switch (type) {
-					case "get_public_key":
-						String npub = data.getStringExtra("signature");
-						String packageName = data.getStringExtra("package");
-						ret.put("npub", npub);
-						ret.put("package", packageName);
-						break;
-					case "sign_event":
-						String signature = data.getStringExtra("signature");
-						String id = data.getStringExtra("id");
-						String signedEventJson = data.getStringExtra("event");
-						ret.put("signature", signature);
-						ret.put("id", id);
-						ret.put("event", signedEventJson);
-						break;
-					case "nip04_encrypt":
-					case "nip44_encrypt":
-					case "nip04_decrypt":
-					case "nip44_decrypt":
-					case "decrypt_zap_event":
-						String result = data.getStringExtra("signature");
-						String resultId = data.getStringExtra("id");
-						ret.put("result", result);
-						ret.put("id", resultId);
-						break;
-					default:
-						savedCall.reject("Unknown response type");
-						return;
-				}
-				savedCall.resolve(ret);
-			} else if (savedCall != null) {
-				savedCall.reject("Request rejected or cancelled");
-			}
-		}
-	}
 }

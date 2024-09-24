@@ -1,0 +1,5 @@
+{
+  "appId": "social.nostr.signer.app",
+  "appName": "nostr-sample-app",
+  "webDir": "dist"
+}
