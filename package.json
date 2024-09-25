@@ -46,7 +46,7 @@
 	"prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },
-  "devDependencies": {
+  "dependencies": {
     "@capacitor/android": "^6.0.0",
     "@capacitor/core": "^6.0.0",
     "@capacitor/docgen": "^0.2.2",
