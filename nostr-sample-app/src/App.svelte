@@ -113,9 +113,9 @@
       } else {
 		let { data } = nip19.decode(encryptPubKey);
         const { result } = await NostrSignerPlugin.nip04Encrypt({
-          pubKey: data,
-          plainText: messageToEncrypt,
-		  npub: publicKey,
+			plainText: messageToEncrypt,
+			pubKey: data,
+			npub: publicKey,
         });
         encryptedMessage = result;
       }

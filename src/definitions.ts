@@ -1,7 +1,11 @@
 export interface NostrSignerPlugin {
-  isExternalSignerInstalled(): Promise<{ installed: boolean }>;
-  getPublicKey(): Promise<{ npub: string; package: string }>;
-  setPackageName(options: { packageName: string; }) : Promise<void>;
+  isExternalSignerInstalled(options?: {
+    packageName: string;
+  }): Promise<{ installed: boolean }>;
+  getPublicKey(options?: {
+    permissions: string;
+  }): Promise<{ npub: string; package: string }>;
+  setPackageName(options: { packageName: string }): Promise<void>;
   signEvent(options: {
     eventJson: string;
     eventId: string;

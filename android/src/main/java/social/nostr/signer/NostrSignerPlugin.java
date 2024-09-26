@@ -25,9 +25,18 @@ public class NostrSignerPlugin extends Plugin {
 
 	protected PluginCall savedCall;
 	protected static final int SIGNER_REQUEST_CODE = 1001;
+
 	private static String signerPackageName = null;
 
-	private static final String TAG = "Nostr Signer";
+	private static final String TAG = "Nostr Signer Plugin";
+
+	private String publicKey = null;
+
+	@Override
+	public void load() {
+		Log.i(TAG, "Loading");
+
+	}
 
 	@PluginMethod
 	public void setPackageName(PluginCall call) {
@@ -44,8 +53,8 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void isExternalSignerInstalled(PluginCall call) {
-
 		Context context = getContext();
+		signerPackageName = call.getString("packageName");
 		boolean isInstalled = isExternalSignerInstalled(context, signerPackageName);
 		JSObject ret = new JSObject();
 		ret.put("installed", isInstalled);
@@ -56,7 +65,9 @@ public class NostrSignerPlugin extends Plugin {
 		Intent intent = new Intent();
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.setData(Uri.parse("nostrsigner:"));
-		intent.setPackage(packageName);
+		if (packageName != null || !packageName.isEmpty()) {
+			intent.setPackage(packageName);
+		}
 		PackageManager packageManager = context.getPackageManager();
 		List<ResolveInfo> activities = packageManager.queryIntentActivities(intent, 0);
 		return !activities.isEmpty();
@@ -64,18 +75,28 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void getPublicKey(PluginCall call) {
-		savedCall = call;
 
 		if (signerPackageName == null || signerPackageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
 
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "get_public_key");
+		if (publicKey != null) {
+			JSObject ret = new JSObject();
+			ret.put("npub", publicKey);
+			ret.put("package", signerPackageName);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"));
+			intent.setPackage(signerPackageName);
+			intent.putExtra("type", "get_public_key");
 
-		startActivityForResult(call, intent, "getPublicKeyResult");
+			String permissions = call.getString("permissions");
+			if (permissions != null || !permissions.isEmpty()) {
+				Intent.putExtra("permissions", permissions);
+			}
+			startActivityForResult(call, intent, "getPublicKeyResult");
+		}
 	}
 
 	@ActivityCallback
@@ -95,7 +116,6 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void signEvent(PluginCall call) {
-		savedCall = call;
 
 		if (signerPackageName == null || signerPackageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
@@ -103,10 +123,10 @@ public class NostrSignerPlugin extends Plugin {
 		}
 
 		String eventJson = call.getString("eventJson");
-        String eventId = call.getString("eventId");
-        String npub = call.getString("npub");
+		String eventId = call.getString("eventId");
+		String npub = call.getString("npub");
 
-        if (eventJson == null || eventId == null || npub == null) {
+		if (eventJson == null || eventId == null || npub == null) {
 			call.reject("Missing parameters");
 			return;
 		}
@@ -119,7 +139,7 @@ public class NostrSignerPlugin extends Plugin {
 
 		startActivityForResult(call, intent, "signEventActivity");
 	}
-	
+
 	@ActivityCallback
 	private void signEventActivity(PluginCall call, ActivityResult result) {
 		if (result.getResultCode() == Activity.RESULT_CANCELED) {
@@ -294,6 +314,5 @@ public class NostrSignerPlugin extends Plugin {
 
 		startActivityForResult(call, intent, "encryptEventActivity");
 	}
-
 
 }
