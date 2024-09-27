@@ -11,10 +11,9 @@
   let encryptPubKey = '';
   let messageToEncrypt = '';
   let encryptedMessage = '';
-  let messageToDecrypt = '';
   let decryptedMessage = '';
   let signerInstalled = false;
-  let packageName = 'com.greenart7c3.nostrsigner.debug'; // Default package name
+  let packageName = '';
   let signerApps: AppInfo[] = [];
   let isScriptActive: boolean = false;
 
@@ -31,7 +30,7 @@
     // Proceed to use this package name when invoking other plugin methods
   }
 
-  // Function to get the installed signer apps
+  // Get the installed signer apps
   async function getSignerApps() {
     try {
       const result = await NostrSignerPlugin.getInstalledSignerApps();
@@ -42,7 +41,7 @@
     }
   }
 
-  // Function to check if signer app is installed
+  // Check if signer app is installed
   async function checkSignerInstalled() {
     if (Capacitor.getPlatform() === 'android') {
       try {
@@ -202,11 +201,12 @@
   <div class="container">
     <h2>Nostr Signer Demo</h2>
 
+	<h2>Installed Signers</h2>
     {#if signerApps.length > 0}
       <ul>
         {#each signerApps as app}
           <li>
-            <button on:click={() => selectSignerApp(app)}>
+            <button class="app-chooser" on:click={() => selectSignerApp(app)}>
               <img
                 src={`data:image/png;base64,${app.icon}`}
                 alt={app.name}
@@ -278,11 +278,48 @@
         <p class="text-element">{encryptedMessage}</p>
       </div>
     {/if}
-  </div>
+    {#if decryptedMessage}
+      <div class="output">
+        <strong>Decrypted Message:</strong>
+        <p class="text-element">{decryptedMessage}</p>
+      </div>
+    {/if}
+
+</div>
 </main>
 
 <style>
-  /* Simple styles for the UI */
+  ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    display: flex;
+    flex-direction: column; /* Stack the children vertically */
+    align-items: center; /* Center the children horizontally */
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+
+  img {
+    width: 80px; /* Adjust the size as needed */
+    height: 80px;
+    margin-bottom: 10px; /* Space between the image and the label */
+  }
+
+  span {
+    font-size: 16px;
+    text-align: center; /* Center the text */
+  }
+
+  .app-chooser {
+	display: flex;
+    flex-direction: column; /* Stack the children vertically */
+    align-items: center; /* Center the children horizontally */
+  }
+
   input,
   textarea {
     width: 100%;
