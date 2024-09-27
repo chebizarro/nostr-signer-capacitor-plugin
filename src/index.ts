@@ -1,10 +1,10 @@
 import { registerPlugin } from '@capacitor/core';
 
-import { NostrSignerPlugin } from './definitions';
+import { NostrSignerPlugin, AppInfo } from './definitions';
 
 const NostrSignerPlugin = registerPlugin<NostrSignerPlugin>(
   'NostrSignerPlugin',
 );
 
 export * from './definitions';
-export { NostrSignerPlugin };
+export { NostrSignerPlugin, AppInfo };

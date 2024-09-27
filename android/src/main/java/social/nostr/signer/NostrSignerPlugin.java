@@ -2,13 +2,13 @@ package social.nostr.signer;
 
 import android.content.Intent;
 import android.content.Context;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.app.Activity;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 
 import androidx.activity.result.ActivityResult;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.annotation.ActivityCallback;
@@ -18,82 +18,86 @@ import com.getcapacitor.PluginMethod;
 
 import java.util.List;
 
-import android.util.Log;
-
 @CapacitorPlugin(name = "NostrSignerPlugin")
 public class NostrSignerPlugin extends Plugin {
 
-	protected PluginCall savedCall;
-	protected static final int SIGNER_REQUEST_CODE = 1001;
-
-	private static String signerPackageName = null;
-
-	private static final String TAG = "Nostr Signer Plugin";
-
-	private String publicKey = null;
+	private NostrSigner implementation;
+	private String signerPackageName = null;
 
 	@Override
 	public void load() {
-		Log.i(TAG, "Loading");
-
-	}
-
-	@PluginMethod
-	public void setPackageName(PluginCall call) {
-		String packageName = call.getString("packageName");
-
-		if (packageName == null || packageName.isEmpty()) {
-			call.reject("Missing or empty packageName parameter");
-			return;
-		}
-
-		signerPackageName = packageName;
-		call.resolve();
+		implementation = new NostrSigner();
 	}
 
 	@PluginMethod
 	public void isExternalSignerInstalled(PluginCall call) {
 		Context context = getContext();
-		signerPackageName = call.getString("packageName");
-		boolean isInstalled = isExternalSignerInstalled(context, signerPackageName);
+		String packageName = call.getString("packageName");
+		List<ResolveInfo> signers = implementation.isExternalSignerInstalled(context, signerPackageName);
+		boolean isInstalled = !signers.isEmpty();
 		JSObject ret = new JSObject();
 		ret.put("installed", isInstalled);
 		call.resolve(ret);
 	}
 
-	public static boolean isExternalSignerInstalled(Context context, String packageName) {
-		Intent intent = new Intent();
-		intent.setAction(Intent.ACTION_VIEW);
-		intent.setData(Uri.parse("nostrsigner:"));
-		if (packageName != null || !packageName.isEmpty()) {
-			intent.setPackage(packageName);
+	@PluginMethod
+	public void getInstalledSignerApps(PluginCall call) {
+		Context context = getContext();
+		List<SignerAppInfo> signerAppInfos = implementation.getInstalledSignerApps(context);
+		JSArray appsArray = new JSArray();
+		for (SignerAppInfo signerAppInfo : signerAppInfos) {
+			JSObject appInfo = new JSObject();
+			appInfo.put("name", signerAppInfo.name);
+			appInfo.put("packageName", signerAppInfo.packageName);
+			appInfo.put("icon", signerAppInfo.icon);
+			appsArray.put(appInfo);
 		}
-		PackageManager packageManager = context.getPackageManager();
-		List<ResolveInfo> activities = packageManager.queryIntentActivities(intent, 0);
-		return !activities.isEmpty();
+		JSObject ret = new JSObject();
+		ret.put("apps", appsArray);
+		call.resolve(ret);
+	}
+
+	private String getPackageName(PluginCall call) {
+		String packageName = call.getString("packageName");
+		if (packageName == null || packageName.isEmpty()) {
+			packageName = signerPackageName;
+		}
+		return packageName;
+	}
+
+	@PluginMethod
+	public void setPackageName(PluginCall call) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
+			call.reject("Missing or empty packageName parameter");
+			return;
+		}
+		signerPackageName = packageName;
+		call.resolve();
 	}
 
 	@PluginMethod
 	public void getPublicKey(PluginCall call) {
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
-
+		Context context = getContext();
+		String publicKey = implementation.getPublicKey(context, signerPackageName);
 		if (publicKey != null) {
 			JSObject ret = new JSObject();
 			ret.put("npub", publicKey);
-			ret.put("package", signerPackageName);
+			ret.put("package", packageName);
 			call.resolve(ret);
 		} else {
 			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"));
-			intent.setPackage(signerPackageName);
+			intent.setPackage(packageName);
 			intent.putExtra("type", "get_public_key");
 
 			String permissions = call.getString("permissions");
-			if (permissions != null || !permissions.isEmpty()) {
-				Intent.putExtra("permissions", permissions);
+			if (permissions != null) {
+				intent.putExtra("permissions", permissions);
 			}
 			startActivityForResult(call, intent, "getPublicKeyResult");
 		}
@@ -116,12 +120,11 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void signEvent(PluginCall call) {
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
-
 		String eventJson = call.getString("eventJson");
 		String eventId = call.getString("eventId");
 		String npub = call.getString("npub");
@@ -130,14 +133,22 @@ public class NostrSignerPlugin extends Plugin {
 			call.reject("Missing parameters");
 			return;
 		}
-
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + eventJson));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "sign_event");
-		intent.putExtra("id", eventId);
-		intent.putExtra("current_user", npub);
-
-		startActivityForResult(call, intent, "signEventActivity");
+		Context context = getContext();
+		String[] signedEventJson = implementation.signEvent(context, packageName, eventJson, npub);
+		if (signedEventJson != null) {
+			JSObject ret = new JSObject();
+			ret.put("signature", signedEventJson[0]);
+			ret.put("id", eventId);
+			ret.put("event", signedEventJson[1]);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + eventJson));
+			intent.setPackage(packageName);
+			intent.putExtra("type", "sign_event");
+			intent.putExtra("id", eventId);
+			intent.putExtra("current_user", npub);
+			startActivityForResult(call, intent, "signEventActivity");
+		}
 	}
 
 	@ActivityCallback
@@ -159,13 +170,11 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void nip04Encrypt(PluginCall call) {
-		savedCall = call;
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
-
 		String plainText = call.getString("plainText");
 		String pubKey = call.getString("pubKey");
 		String npub = call.getString("npub");
@@ -175,15 +184,22 @@ public class NostrSignerPlugin extends Plugin {
 			call.reject("Missing parameters");
 			return;
 		}
-
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + plainText));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "nip04_encrypt");
-		intent.putExtra("id", id);
-		intent.putExtra("current_user", npub);
-		intent.putExtra("pubKey", pubKey);
-
-		startActivityForResult(call, intent, "encryptEventActivity");
+		Context context = getContext();
+		String encryptedText = implementation.nip04Encrypt(context, packageName, plainText, pubKey, npub);
+		if (encryptedText != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", encryptedText);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + plainText));
+			intent.setPackage(signerPackageName);
+			intent.putExtra("type", "nip04_encrypt");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			intent.putExtra("pubKey", pubKey);
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
 	}
 
 	@ActivityCallback
@@ -203,67 +219,79 @@ public class NostrSignerPlugin extends Plugin {
 
 	@PluginMethod
 	public void nip44Encrypt(PluginCall call) {
-		savedCall = call;
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
-
 		String plainText = call.getString("plainText");
 		String pubKey = call.getString("pubKey");
 		String npub = call.getString("npub");
-		String id = call.getString("id", "some_id");
+		String id = call.getString("id");
 
 		if (plainText == null || pubKey == null || npub == null) {
 			call.reject("Missing parameters");
 			return;
 		}
 
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + plainText));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "nip44_encrypt");
-		intent.putExtra("id", id);
-		intent.putExtra("current_user", npub);
-		intent.putExtra("pubKey", pubKey);
+		Context context = getContext();
+		String encryptedText = implementation.nip44Encrypt(context, packageName, plainText, pubKey, npub);
+		if (encryptedText != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", encryptedText);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + plainText));
+			intent.setPackage(packageName);
+			intent.putExtra("type", "nip44_encrypt");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			intent.putExtra("pubKey", pubKey);
 
-		startActivityForResult(call, intent, "encryptEventActivity");
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
 	}
 
 	@PluginMethod
 	public void nip04Decrypt(PluginCall call) {
-		savedCall = call;
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
-
 		String encryptedText = call.getString("encryptedText");
 		String pubKey = call.getString("pubKey");
 		String npub = call.getString("npub");
-		String id = call.getString("id", "some_id");
+		String id = call.getString("id");
 
 		if (encryptedText == null || pubKey == null || npub == null) {
 			call.reject("Missing parameters");
 			return;
 		}
 
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + encryptedText));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "nip04_decrypt");
-		intent.putExtra("id", id);
-		intent.putExtra("current_user", npub);
-		intent.putExtra("pubKey", pubKey);
-
-		startActivityForResult(call, intent, "encryptEventActivity");
+		Context context = getContext();
+		String decryptedText = implementation.nip04Decrypt(context, packageName, encryptedText, pubKey, npub);
+		if (decryptedText != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", decryptedText);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + encryptedText));
+			intent.setPackage(packageName);
+			intent.putExtra("type", "nip04_decrypt");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			intent.putExtra("pubKey", pubKey);
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
 	}
 
 	@PluginMethod
 	public void nip44Decrypt(PluginCall call) {
-		savedCall = call;
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
@@ -271,48 +299,65 @@ public class NostrSignerPlugin extends Plugin {
 		String encryptedText = call.getString("encryptedText");
 		String pubKey = call.getString("pubKey");
 		String npub = call.getString("npub");
-		String id = call.getString("id", "some_id");
+		String id = call.getString("id");
 
 		if (encryptedText == null || pubKey == null || npub == null) {
 			call.reject("Missing parameters");
 			return;
 		}
 
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + encryptedText));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "nip44_decrypt");
-		intent.putExtra("id", id);
-		intent.putExtra("current_user", npub);
-		intent.putExtra("pubKey", pubKey);
+		Context context = getContext();
+		String decryptedText = implementation.nip44Decrypt(context, packageName, encryptedText, pubKey, npub);
 
-		startActivityForResult(call, intent, "encryptEventActivity");
+		if (decryptedText != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", decryptedText);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + encryptedText));
+			intent.setPackage(signerPackageName);
+			intent.putExtra("type", "nip44_decrypt");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			intent.putExtra("pubKey", pubKey);
+
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
 	}
 
 	@PluginMethod
 	public void decryptZapEvent(PluginCall call) {
-		savedCall = call;
-
-		if (signerPackageName == null || signerPackageName.isEmpty()) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
 			call.reject("Signer package name not set. Call setPackageName first.");
 			return;
 		}
 
 		String eventJson = call.getString("eventJson");
 		String npub = call.getString("npub");
-		String id = call.getString("id", "some_id");
+		String id = call.getString("id");
 
 		if (eventJson == null || npub == null) {
 			call.reject("Missing parameters");
 			return;
 		}
 
-		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + eventJson));
-		intent.setPackage(signerPackageName);
-		intent.putExtra("type", "decrypt_zap_event");
-		intent.putExtra("id", id);
-		intent.putExtra("current_user", npub);
-
-		startActivityForResult(call, intent, "encryptEventActivity");
+		Context context = getContext();
+		String decryptedEventJson = implementation.decryptZapEvent(context, packageName, eventJson, npub);
+		if (decryptedEventJson != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", decryptedEventJson);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + eventJson));
+			intent.setPackage(signerPackageName);
+			intent.putExtra("type", "decrypt_zap_event");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
 	}
 
 }

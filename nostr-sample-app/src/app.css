@@ -77,3 +77,57 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.container {
+  position: relative;
+  background: linear-gradient(45deg, #0f81e8, #40d7d4, #ffa902);
+  overflow: hidden;
+  margin: auto;
+  padding: 1rem;
+}
+
+.text-element {
+  word-wrap: break-word;
+  word-break: break-word; /* Force long words to wrap */
+  white-space: normal; /* Ensure text wraps normally */
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: conic-gradient(from 90deg at 50% 50%, #ffa902, #0f81e8);
+  width: 300px;
+  height: 300px;
+  opacity: 0.8;
+  animation: move 15s ease-in-out infinite;
+}
+
+.circle:nth-child(1) {
+  top: -50px;
+  left: -50px;
+  animation-delay: 0s;
+}
+
+.circle:nth-child(2) {
+  top: 100px;
+  left: 200px;
+  animation-delay: 5s;
+}
+
+.circle:nth-child(3) {
+  top: 300px;
+  left: -100px;
+  animation-delay: 10s;
+}
+
+@keyframes move {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(50px, 50px) rotate(180deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}

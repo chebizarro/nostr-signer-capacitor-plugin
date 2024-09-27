@@ -3,8 +3,7 @@
   import { Capacitor } from '@capacitor/core';
   import { onMount } from 'svelte';
   import { getEventHash, type UnsignedEvent } from 'nostr-tools';
-  import { ShortTextNote } from 'nostr-tools/kinds';
-  import * as nip19 from 'nostr-tools/nip19'
+  import * as nip19 from 'nostr-tools/nip19';
 
   let publicKey = '';
   let eventContent = '';
@@ -15,7 +14,33 @@
   let messageToDecrypt = '';
   let decryptedMessage = '';
   let signerInstalled = false;
-  let packageName = 'com.greenart7c3.nostrsigner'; // Default package name
+  let packageName = 'com.greenart7c3.nostrsigner.debug'; // Default package name
+  let signerApps: AppInfo[] = [];
+  let isScriptActive: boolean = false;
+
+  // Define the interface for AppInfo
+  interface AppInfo {
+    name: string;
+    packageName: string;
+    icon: string; // Base64-encoded string of the app icon
+  }
+
+  function selectSignerApp(app: AppInfo) {
+    // Store the selected app's package name
+    packageName = app.packageName;
+    // Proceed to use this package name when invoking other plugin methods
+  }
+
+  // Function to get the installed signer apps
+  async function getSignerApps() {
+    try {
+      const result = await NostrSignerPlugin.getInstalledSignerApps();
+      signerApps = result.apps;
+      console.log('Installed Signer Apps:', signerApps);
+    } catch (error) {
+      console.error('Error getting installed signer apps:', error);
+    }
+  }
 
   // Function to check if signer app is installed
   async function checkSignerInstalled() {
@@ -36,7 +61,7 @@
 
   // Call checkSignerInstalled when the component mounts
   onMount(async () => {
-    await checkSignerInstalled();
+    await getSignerApps();
   });
 
   // Watch for changes in packageName and update signerInstalled accordingly
@@ -72,8 +97,11 @@
         content: eventContent,
         tags: [],
         pubkey: data,
+        id: '',
+        sig: '',
       };
-	  let hash = getEventHash(event);
+      let hash = getEventHash(event);
+      event.id = hash;
       if (
         Capacitor.getPlatform() === 'web' &&
         window.nostr &&
@@ -88,7 +116,7 @@
         const { event: signedEventJson } = await NostrSignerPlugin.signEvent({
           eventJson: JSON.stringify(event),
           eventId: hash,
-          npub: publicKey,
+          npub: data,
         });
         signedEvent = JSON.stringify(JSON.parse(signedEventJson), null, 2);
       }
@@ -97,7 +125,7 @@
     }
   }
 
-  // Function to encrypt a message using NIP-04
+  // Function to encrypt a message
   async function encryptMessage() {
     try {
       if (
@@ -111,20 +139,29 @@
           messageToEncrypt,
         );
       } else {
-		let { data } = nip19.decode(encryptPubKey);
-        const { result } = await NostrSignerPlugin.nip04Encrypt({
-			plainText: messageToEncrypt,
-			pubKey: data,
-			npub: publicKey,
-        });
-        encryptedMessage = result;
+        let { data } = nip19.decode(encryptPubKey);
+        if (isScriptActive) {
+          const { result } = await NostrSignerPlugin.nip44Encrypt({
+            plainText: messageToEncrypt,
+            pubKey: data,
+            npub: publicKey,
+          });
+          encryptedMessage = result;
+        } else {
+          const { result } = await NostrSignerPlugin.nip04Encrypt({
+            plainText: messageToEncrypt,
+            pubKey: data,
+            npub: publicKey,
+          });
+          encryptedMessage = result;
+        }
       }
     } catch (error) {
       console.error('Error encrypting message:', error);
     }
   }
 
-  // Function to decrypt a message using NIP-04
+  // Function to decrypt a message
   async function decryptMessage() {
     try {
       if (
@@ -135,14 +172,25 @@
       ) {
         decryptedMessage = await window.nostr.nip04.decrypt(
           encryptPubKey,
-          messageToDecrypt,
+          encryptedMessage,
         );
       } else {
-        const { result } = await NostrSignerPlugin.nip04Decrypt({
-          pubKey: encryptPubKey,
-          encryptedText: messageToDecrypt,
-        });
-        decryptedMessage = result;
+        let { data } = nip19.decode(encryptPubKey);
+        if (isScriptActive) {
+          const { result } = await NostrSignerPlugin.nip44Decrypt({
+            pubKey: data,
+            npub: publicKey,
+            encryptedText: encryptedMessage,
+          });
+          decryptedMessage = result;
+        } else {
+          const { result } = await NostrSignerPlugin.nip04Decrypt({
+            pubKey: data,
+            npub: publicKey,
+            encryptedText: encryptedMessage,
+          });
+          decryptedMessage = result;
+        }
       }
     } catch (error) {
       console.error('Error decrypting message:', error);
@@ -152,26 +200,27 @@
 
 <main>
   <div class="container">
-    <h1>Nostr Sample App</h1>
+    <h2>Nostr Signer Demo</h2>
 
-    <!-- Input for the signer app package name -->
-    <h2>Signer App Package Name</h2>
-    <input
-      type="text"
-      bind:value={packageName}
-      placeholder="Signer App Package Name"
-    />
-    <button on:click={checkSignerInstalled}>Check Signer Installation</button>
-
-    {#if !signerInstalled}
-      <p style="color: red;">
-        Signer app is not installed. Please install it to proceed.
-      </p>
-	  {:else}
-      <p style="color: green;">
-        Signer app is installed.
-      </p>
-	  {/if}
+    {#if signerApps.length > 0}
+      <ul>
+        {#each signerApps as app}
+          <li>
+            <button on:click={() => selectSignerApp(app)}>
+              <img
+                src={`data:image/png;base64,${app.icon}`}
+                alt={app.name}
+                width="48"
+                height="48"
+              />
+              <span>{app.name}</span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <p>No signer apps installed.</p>
+    {/if}
 
     <hr />
 
@@ -181,7 +230,7 @@
     {#if publicKey}
       <div class="output">
         <strong>Public Key:</strong>
-        <pre>{publicKey}</pre>
+        <p class="text-element">{publicKey}</p>
       </div>
     {/if}
 
@@ -193,13 +242,13 @@
     {#if signedEvent}
       <div class="output">
         <strong>Signed Event:</strong>
-        <pre>{signedEvent}</pre>
+        <p class="text-element">{signedEvent}</p>
       </div>
     {/if}
 
     <hr />
 
-    <h2>Encrypt Message (NIP-04)</h2>
+    <h2>Encryption</h2>
     <input
       type="text"
       bind:value={encryptPubKey}
@@ -207,28 +256,26 @@
     />
     <textarea bind:value={messageToEncrypt} placeholder="Message to Encrypt"
     ></textarea>
-    <button on:click={encryptMessage} disabled={!signerInstalled}
-      >Encrypt Message</button
-    >
+    <div class="toggle-container">
+      <label class="switch">
+        <input type="checkbox" bind:checked={isScriptActive} />
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-text">{isScriptActive ? 'NIP-44' : 'NIP-04'}</span>
+    </div>
+
+    <div class="button-container">
+      <button on:click={encryptMessage} disabled={!signerInstalled}
+        >Encrypt Message</button
+      >
+      <button on:click={decryptMessage} disabled={!signerInstalled}
+        >Decrypt Message</button
+      >
+    </div>
     {#if encryptedMessage}
       <div class="output">
         <strong>Encrypted Message:</strong>
-        <pre>{encryptedMessage}</pre>
-      </div>
-    {/if}
-
-    <hr />
-
-    <h2>Decrypt Message (NIP-04)</h2>
-    <textarea bind:value={messageToDecrypt} placeholder="Encrypted Message"
-    ></textarea>
-    <button on:click={decryptMessage} disabled={!signerInstalled}
-      >Decrypt Message</button
-    >
-    {#if decryptedMessage}
-      <div class="output">
-        <strong>Decrypted Message:</strong>
-        <pre>{decryptedMessage}</pre>
+        <p class="text-element">{encryptedMessage}</p>
       </div>
     {/if}
   </div>
@@ -236,12 +283,6 @@
 
 <style>
   /* Simple styles for the UI */
-  .container {
-    max-width: 600px;
-    margin: auto;
-    padding: 1rem;
-  }
-
   input,
   textarea {
     width: 100%;
@@ -252,9 +293,76 @@
     margin-bottom: 1rem;
   }
 
+  .button-container {
+    display: flex; /* Use flexbox to align buttons side by side */
+    gap: 10px; /* Adds space between the buttons */
+  }
+
   .output {
     background-color: #f0f0f0;
     padding: 1rem;
     white-space: pre-wrap;
+  }
+
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* Toggle Switch - slider style */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+
+  /* Hide default checkbox */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  /* The slider */
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: '';
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+
+  /* When checked, slide the toggle */
+  input:checked + .slider {
+    background-color: #0f81e8;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(26px);
+  }
+
+  /* Style for the text label */
+  .toggle-text {
+    margin-left: 10px;
+    font-size: 1.2rem;
   }
 </style>
