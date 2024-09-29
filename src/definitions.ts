@@ -1,6 +1,5 @@
 export interface NostrSignerPlugin {
   getInstalledSignerApps(): Promise<{ apps: AppInfo[] }>;
-
   isExternalSignerInstalled(options?: {
     packageName: string;
   }): Promise<{ installed: boolean }>;
