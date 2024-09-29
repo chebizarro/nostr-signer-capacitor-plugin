@@ -1,0 +1,10 @@
+{
+  "appId": "nip.07.app",
+  "appName": "nip07-sample-app",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

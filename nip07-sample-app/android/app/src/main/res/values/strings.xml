@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">nip07-sample-app</string>
+    <string name="title_activity_main">nip07-sample-app</string>
+    <string name="package_name">nip.07.app</string>
+    <string name="custom_url_scheme">nip.07.app</string>
+</resources>
