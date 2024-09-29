@@ -16,6 +16,9 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @CapacitorPlugin(name = "NostrSignerPlugin")
@@ -360,4 +363,29 @@ public class NostrSignerPlugin extends Plugin {
 		}
 	}
 
+	private String readJavascriptFromAssets(String fileName) {
+		try {
+			InputStream is = getContext().getAssets().open(fileName);
+			int size = is.available();
+			byte[] buffer = new byte[size];
+			is.read(buffer);
+			is.close();
+			return new String(buffer, StandardCharsets.UTF_8);
+		} catch (IOException ex) {
+			return null;
+		}
+	}
+
+	@PluginMethod
+	public void injectNostr(PluginCall call) {
+		String jsCode = readJavascriptFromAssets("www/assets/nostr-inject.js");
+		if (jsCode != null) {
+			getActivity().runOnUiThread(() -> {
+				bridge.getWebView().evaluateJavascript(jsCode, null);
+			});
+			call.resolve();
+		} else {
+			call.reject("Failed to load nostr-inject.js");
+		}
+	}
 }

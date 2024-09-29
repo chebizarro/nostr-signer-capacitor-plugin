@@ -1,4 +1,5 @@
 export interface NostrSignerPlugin {
+  injectNostr(): Promise<void>;
   getInstalledSignerApps(): Promise<{ apps: AppInfo[] }>;
   isExternalSignerInstalled(options?: {
     packageName: string;
@@ -46,5 +47,5 @@ export interface NostrSignerPlugin {
 export interface AppInfo {
   name: string;
   packageName: string;
-  icon: string; // Base64-encoded string of the app icon
+  icon: string;
 }

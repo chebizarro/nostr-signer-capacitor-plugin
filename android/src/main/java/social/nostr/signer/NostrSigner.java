@@ -189,4 +189,26 @@ public class NostrSigner {
 		return decryptedEventJson;
 	}
 
+	private String resolveContent(Context context, Uri uri, String[] projection) {
+		ContentResolver contentResolver = context.getContentResolver();
+		Cursor result;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null); 
+		} catch (Exception e) {
+			return null;			
+		}
+		if (result == null) {
+			return null;
+		}
+		String eventJson = null;
+		if (result.moveToFirst()) {
+			int index = result.getColumnIndex("signature");
+			if (index >= 0) {
+				eventJson = result.getString(index);
+			}
+		}
+		result.close();
+		return eventJson;
+	}
+
 }
