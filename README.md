@@ -14,7 +14,7 @@ npx cap sync
 ### Import the Plugin
 
 ```typescript
-import NostrSigner from 'nostr-signer-capacitor-plugin';
+import NostrSignerPlugin from 'nostr-signer-capacitor-plugin';
 ```
 
 ### Set the Signer Package Name (Android Only)
@@ -22,13 +22,13 @@ import NostrSigner from 'nostr-signer-capacitor-plugin';
 Before using the plugin on Android, you need to set the package name of the external signer app.
 
 ```typescript
-await NostrSigner.setPackageName({ packageName: 'com.example.signer' });
+await NostrSignerPlugin.setPackageName({ packageName: 'com.example.signer' });
 ```
 
 ### Check if External Signer is Installed (Android Only)
 
 ```typescript
-const { installed } = await NostrSigner.isExternalSignerInstalled();
+const { installed } = await NostrSignerPlugin.isExternalSignerInstalled();
 if (!installed) {
   console.log('External signer app is not installed.');
 }
@@ -38,7 +38,7 @@ if (!installed) {
 
 ```typescript
 try {
-  const { npub } = await NostrSigner.getPublicKey();
+  const { npub } = await NostrSignerPlugin.getPublicKey();
   console.log('Public Key:', npub);
 } catch (error) {
   console.error('Error getting public key:', error);
@@ -56,7 +56,7 @@ const event = {
 };
 
 try {
-  const { event: signedEventJson } = await NostrSigner.signEvent({
+  const { event: signedEventJson } = await NostrSignerPlugin.signEvent({
     eventJson: JSON.stringify(event),
   });
   const signedEvent = JSON.parse(signedEventJson);
@@ -70,7 +70,7 @@ try {
 
 ```typescript
 try {
-  const { result: encryptedText } = await NostrSigner.nip04Encrypt({
+  const { result: encryptedText } = await NostrSignerPlugin.nip04Encrypt({
     pubKey: 'recipient_public_key',
     plainText: 'Secret message',
   });
@@ -84,7 +84,7 @@ try {
 
 ```typescript
 try {
-  const { result: decryptedText } = await NostrSigner.nip04Decrypt({
+  const { result: decryptedText } = await NostrSignerPlugin.nip04Decrypt({
     pubKey: 'sender_public_key',
     encryptedText: 'encrypted_text',
   });
@@ -98,7 +98,7 @@ try {
 
 ```typescript
 try {
-  const { result: encryptedText } = await NostrSigner.nip44Encrypt({
+  const { result: encryptedText } = await NostrSignerPlugin.nip44Encrypt({
     pubKey: 'recipient_public_key',
     plainText: 'Secret message',
   });
@@ -112,7 +112,7 @@ try {
 
 ```typescript
 try {
-  const { result: decryptedText } = await NostrSigner.nip44Decrypt({
+  const { result: decryptedText } = await NostrSignerPlugin.nip44Decrypt({
     pubKey: 'sender_public_key',
     encryptedText: 'encrypted_text',
   });
@@ -126,7 +126,7 @@ try {
 
 ```typescript
 try {
-  const { result: decryptedEventJson } = await NostrSigner.decryptZapEvent({
+  const { result: decryptedEventJson } = await NostrSignerPlugin.decryptZapEvent({
     eventJson: JSON.stringify(encryptedEvent),
   });
   const decryptedEvent = JSON.parse(decryptedEventJson);
