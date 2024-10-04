@@ -16,8 +16,8 @@ export interface NostrSignerPlugin {
    * and the package name of the signer app.
    */
   getPublicKey(options?: {
-    permissions: string;
-  }): Promise<{ npub: string; package: string }>;
+    permissions: Permission;
+  }): Promise<{ npub: string; package?: string }>;
 
   setPackageName(options: { packageName: string }): Promise<void>;
   /**
@@ -78,4 +78,9 @@ export interface AppInfo {
   name: string;
   packageName: string;
   icon: string;
+}
+
+export interface Permission {
+  type: string;
+  kind?: string;
 }

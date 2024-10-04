@@ -376,11 +376,20 @@ public class NostrSignerPlugin extends Plugin {
 		}
 	}
 
+    private String getDesktopUserAgent() {
+        String desktopUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                                  "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                                  "Chrome/91.0.4472.124 Safari/537.36";
+        return desktopUserAgent;
+    }
+
+
 	@PluginMethod
 	public void injectNostr(PluginCall call) {
 		String jsCode = readJavascriptFromAssets("www/assets/nostr-inject.js");
 		if (jsCode != null) {
 			getActivity().runOnUiThread(() -> {
+				//bridge.getWebView().getSettings().setUserAgentString(getDesktopUserAgent());
 				bridge.getWebView().evaluateJavascript(jsCode, null);
 			});
 			call.resolve();

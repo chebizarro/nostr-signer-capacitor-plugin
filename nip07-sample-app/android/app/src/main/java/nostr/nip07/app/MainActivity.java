@@ -1,4 +1,4 @@
-package nip.07.app;
+package nostr.nip07.app;
 
 import com.getcapacitor.BridgeActivity;
 

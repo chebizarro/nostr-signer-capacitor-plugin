@@ -25,6 +25,7 @@
 	async function getPublicKey() {
 	  if (window.nostr) {
 		try {
+		  await window.nostr.setPackageName({packageName: 'com.greenart7c3.nostrsigner'});
 		  const publicKey = await window.nostr.getPublicKey();
 		  alert('Public Key: ' + publicKey);
 		} catch (error) {
@@ -62,6 +63,7 @@
 	}
   </style>
   
+  <main>
   <div id="browser-container">
 	<div id="address-bar">
 	  <input
@@ -76,4 +78,4 @@
 	</div>
 	<iframe id="webview" src={iframeSrc} allow="clipboard-read; clipboard-write"></iframe>
   </div>
-  
+</main>

@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "nip.07.app"
+    namespace "nostr.nip07.app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "nip.07.app"
+        applicationId "nostr.nip07.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -1,27 +1,24 @@
 {
-  "name": "capacitor-app",
-  "version": "1.0.0",
-  "description": "An Amazing Capacitor App",
+  "name": "nip07-sample-app",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "keywords": [
-    "capacitor",
-    "mobile"
-  ],
   "scripts": {
-    "start": "vite",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.1",
+    "svelte": "^4.2.19",
+    "vite": "^5.4.1"
+  },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
-    "@capacitor/camera": "latest",
-    "@capacitor/core": "latest",
-    "@capacitor/splash-screen": "latest"
-  },
-  "devDependencies": {
-    "@capacitor/cli": "latest",
-    "vite": "^5.4.2"
-  },
-  "author": "",
-  "license": "ISC"
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "nostr-signer-capacitor-plugin": "file:../../nostr-signer-capacitor-plugin",
+    "nostr-tools": "^2.7.2",
+    "svelte-routing": "^2.13.0"
+  }
 }

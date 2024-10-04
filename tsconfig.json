@@ -16,9 +16,9 @@
     "rootDir": "src",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017"
+    "target": "es2020"
   },
-  "include": ["src/**/*", "nip55-sample-app/android/app/src/main/assets/public/assets/www/assets/nostr-inject.js"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
   "files": ["src/index.ts"]
 }
