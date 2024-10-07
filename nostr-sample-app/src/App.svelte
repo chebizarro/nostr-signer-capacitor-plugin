@@ -22,6 +22,7 @@
     name: string;
     packageName: string;
     icon: string; // Base64-encoded string of the app icon
+	iconUrl: string;
   }
 
   function selectSignerApp(app: AppInfo) {
@@ -208,7 +209,7 @@
           <li>
             <button class="app-chooser" on:click={() => selectSignerApp(app)}>
               <img
-                src={`data:image/png;base64,${app.icon}`}
+                src={app.iconUrl}
                 alt={app.name}
                 width="48"
                 height="48"
