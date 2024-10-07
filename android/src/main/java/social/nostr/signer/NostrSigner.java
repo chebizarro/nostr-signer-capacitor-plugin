@@ -189,4 +189,25 @@ public class NostrSigner {
 		return decryptedEventJson;
 	}
 
+	public String getRelays(Context context, String packageName, String loggedInUserNpub) {
+		ContentResolver contentResolver = context.getContentResolver();
+		Uri uri = Uri.parse("content://" + packageName + ".GET_RELAYS");
+		String[] projection = new String[] { loggedInUserNpub };
+		Cursor result = contentResolver.query(uri, projection, null, null, null);
+
+		if (result == null) {
+			return null;
+		}
+
+		String relayJson = null;
+		if (result.moveToFirst()) {
+			int index = result.getColumnIndex("signature");
+			if (index >= 0) {
+				relayJson = result.getString(index);
+			}
+		}
+		result.close();
+		return relayJson;
+	}
+
 }

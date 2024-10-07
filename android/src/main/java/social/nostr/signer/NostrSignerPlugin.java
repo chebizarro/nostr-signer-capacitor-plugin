@@ -360,4 +360,38 @@ public class NostrSignerPlugin extends Plugin {
 		}
 	}
 
+	@PluginMethod
+	public void getRelays(Plugin call) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
+			call.reject("Signer package name not set. Call setPackageName first.");
+			return;
+		}
+
+		String npub = call.getString("current_user");
+		String id = call.getString("id");
+
+		if (npub == null) {
+			call.reject("Missing parameters");
+			return;
+		}
+
+		Context context = getContext();
+		String relayJson = implementation.getRelays(context, packageName, npub);
+		if (relayJson != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", relayJson);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"));
+			intent.setPackage(signerPackageName);
+			intent.putExtra("type", "get_relays");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
+
+	}
+
 }

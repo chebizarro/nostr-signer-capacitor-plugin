@@ -36,6 +36,10 @@ export interface NostrSignerPlugin {
     npub: string;
     id?: string;
   }): Promise<{ result: string; id: string }>;
+  getRelays(options: {
+    npub: string;
+    id?: string;
+  }): Promise<{ result: string; id: string }>;
   decryptZapEvent(options: {
     eventJson: string;
     npub: string;

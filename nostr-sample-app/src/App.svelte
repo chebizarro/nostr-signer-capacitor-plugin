@@ -16,13 +16,14 @@
   let packageName = '';
   let signerApps: AppInfo[] = [];
   let isScriptActive: boolean = false;
+  let relays = [];
 
   // Define the interface for AppInfo
   interface AppInfo {
     name: string;
     packageName: string;
     icon: string; // Base64-encoded string of the app icon
-	iconUrl: string;
+    iconUrl: string;
   }
 
   function selectSignerApp(app: AppInfo) {
@@ -196,24 +197,40 @@
       console.error('Error decrypting message:', error);
     }
   }
+
+  // Function to decrypt a message
+  async function getRelays() {
+    try {
+      if (
+        Capacitor.getPlatform() === 'web' &&
+        window.nostr &&
+        window.nostr.nip04 &&
+        window.nostr.nip04.decrypt
+      ) {
+        relays = await window.nostr.nip04.getRelays(publicKey);
+      } else {
+        const { result } = await NostrSignerPlugin.getRelays({
+          pubKey: publicKey,
+        });
+        relays = result;
+      }
+    } catch (error) {
+      console.error('Error fetching relays:', error);
+    }
+  }
 </script>
 
 <main>
   <div class="container">
     <h2>Nostr Signer Demo</h2>
 
-	<h2>Installed Signers</h2>
+    <h2>Installed Signers</h2>
     {#if signerApps.length > 0}
       <ul>
         {#each signerApps as app}
           <li>
             <button class="app-chooser" on:click={() => selectSignerApp(app)}>
-              <img
-                src={app.iconUrl}
-                alt={app.name}
-                width="48"
-                height="48"
-              />
+              <img src={app.iconUrl} alt={app.name} width="48" height="48" />
               <span>{app.name}</span>
             </button>
           </li>
@@ -286,7 +303,18 @@
       </div>
     {/if}
 
-</div>
+    <div class="button-container">
+      <button on:click={getRelays} disabled={!signerInstalled}
+        >Get Relays</button
+      >
+    </div>
+    {#if relays}
+      <div class="output">
+        <strong>Relays:</strong>
+        <p class="text-element">{relays}</p>
+      </div>
+    {/if}
+  </div>
 </main>
 
 <style>
@@ -316,7 +344,7 @@
   }
 
   .app-chooser {
-	display: flex;
+    display: flex;
     flex-direction: column; /* Stack the children vertically */
     align-items: center; /* Center the children horizontally */
   }
