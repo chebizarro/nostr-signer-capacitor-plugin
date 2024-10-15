@@ -188,7 +188,7 @@ getInstalledSignerApps() => Promise<{ apps: AppInfo[] }>
 
 Returns a list of AppInfo objects which contain information about which Signer apps are installed.
 
-**Returns:** <code>Promise&lt;{ apps: AppInfop%5B%5D }&gt;</code>
+**Returns:** <code>Promise&lt;{ apps: AppInfop[] }&gt;</code>
 
 
 ### setPackageName(...)
