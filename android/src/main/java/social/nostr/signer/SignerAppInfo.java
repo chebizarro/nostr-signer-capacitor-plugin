@@ -12,14 +12,14 @@ class SignerAppInfo {
 	
 	String name;
 	String packageName;
-	String icon;
+	String iconData;
 	String iconUrl;
 
 	public SignerAppInfo(CharSequence appName, String packageName, Drawable icon) {
 		this.name = appName != null ? appName.toString() : "";
 		this.packageName = packageName;
-		this.icon = drawableToBase64(icon);
-		this.iconUrl = "data:image/png;base64," + this.icon;
+		this.iconData = drawableToBase64(icon);
+		this.iconUrl = "data:image/png;base64," + this.iconData;
 	}
 
 	private String drawableToBase64(Drawable drawable) {

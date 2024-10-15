@@ -49,7 +49,8 @@ public class NostrSignerPlugin extends Plugin {
 			JSObject appInfo = new JSObject();
 			appInfo.put("name", signerAppInfo.name);
 			appInfo.put("packageName", signerAppInfo.packageName);
-			appInfo.put("icon", signerAppInfo.icon);
+			appInfo.put("iconData", signerAppInfo.iconData);
+			appInfo.put("iconUrl", signerAppInfo.iconUrl);
 			appsArray.put(appInfo);
 		}
 		JSObject ret = new JSObject();

@@ -46,6 +46,6 @@ export interface NostrSignerPlugin {
 export interface AppInfo {
   name: string;
   packageName: string;
-  icon: string;
+  iconData: string;
   iconUrl: string;
 }
