@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { NostrSignerPlugin } from 'nostr-signer-capacitor-plugin';
+  import { NostrSignerPlugin, type AppInfo } from 'nostr-signer-capacitor-plugin';
   import { Capacitor } from '@capacitor/core';
   import { onMount } from 'svelte';
   import { getEventHash, type UnsignedEvent } from 'nostr-tools';
@@ -16,13 +16,6 @@
   let packageName = '';
   let signerApps: AppInfo[] = [];
   let isScriptActive: boolean = false;
-
-  // Define the interface for AppInfo
-  interface AppInfo {
-    name: string;
-    packageName: string;
-    icon: string; // Base64-encoded string of the app icon
-  }
 
   function selectSignerApp(app: AppInfo) {
     // Store the selected app's package name
@@ -201,18 +194,13 @@
   <div class="container">
     <h2>Nostr Signer Demo</h2>
 
-	<h2>Installed Signers</h2>
+    <h2>Installed Signers</h2>
     {#if signerApps.length > 0}
       <ul>
         {#each signerApps as app}
           <li>
             <button class="app-chooser" on:click={() => selectSignerApp(app)}>
-              <img
-                src={`data:image/png;base64,${app.icon}`}
-                alt={app.name}
-                width="48"
-                height="48"
-              />
+              <img src={app.iconUrl} alt={app.name} width="48" height="48" />
               <span>{app.name}</span>
             </button>
           </li>
@@ -284,8 +272,7 @@
         <p class="text-element">{decryptedMessage}</p>
       </div>
     {/if}
-
-</div>
+  </div>
 </main>
 
 <style>
@@ -315,7 +302,7 @@
   }
 
   .app-chooser {
-	display: flex;
+    display: flex;
     flex-direction: column; /* Stack the children vertically */
     align-items: center; /* Center the children horizontally */
   }

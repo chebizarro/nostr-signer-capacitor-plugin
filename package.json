@@ -1,6 +1,6 @@
 {
   "name": "nostr-signer-capacitor-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "This capacitor plugin uses the intents package to interact with nostr signer apps on the Android platform",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

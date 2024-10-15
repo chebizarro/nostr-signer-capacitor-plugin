@@ -46,5 +46,6 @@ export interface NostrSignerPlugin {
 export interface AppInfo {
   name: string;
   packageName: string;
-  icon: string; // Base64-encoded string of the app icon
+  iconData: string;
+  iconUrl: string;
 }
