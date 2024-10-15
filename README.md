@@ -52,7 +52,7 @@ The AppInfo object has the following fields"
 export interface AppInfo {
   name: string;        // The name of the app as it appears in the System launcher
   packageName: string; // The package name of the app - pass this to setPackageName
-  iconData: string;    // the base 64 encoded string of the app's ico
+  iconData: string;    // the base 64 encoded string of the app's icon
   iconUrl: string;    // the url to app's icon
 }
 
