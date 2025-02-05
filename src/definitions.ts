@@ -49,3 +49,9 @@ export interface AppInfo {
   iconData: string;
   iconUrl: string;
 }
+
+export interface Permission {
+  type: string;
+  kind?: number;
+  checked?: boolean;
+}
