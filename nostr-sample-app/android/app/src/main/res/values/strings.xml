@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">nostr-sample-app</string>
     <string name="title_activity_main">nostr-sample-app</string>
-    <string name="package_name">social.nostr.signer.app</string>
-    <string name="custom_url_scheme">social.nostr.signer.app</string>
+    <string name="package_name">biz.nostr.capacitor.signer.app</string>
+    <string name="custom_url_scheme">biz.nostr.capacitor.signer.app</string>
 </resources>

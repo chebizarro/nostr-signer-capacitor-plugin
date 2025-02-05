@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "social.nostr.signer.app"
+    namespace "biz.nostr.capacitor.signer.app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "social.nostr.signer.app"
+        applicationId "biz.nostr.capacitor.signer.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

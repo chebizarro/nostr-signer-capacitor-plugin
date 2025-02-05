@@ -4,6 +4,7 @@
   "description": "This capacitor plugin uses the intents package to interact with nostr signer apps on the Android platform",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
+  "type": "module",
   "types": "dist/esm/index.d.ts",
   "unpkg": "dist/plugin.js",
   "files": [
@@ -49,20 +50,21 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@capacitor/docgen": "^0.2.2",
-    "@capacitor/ios": "^7.0.0",
+    "@capacitor/android": "^7.0.1",
+    "@capacitor/core": "^7.0.1",
+    "@capacitor/docgen": "^0.3.0",
+    "@capacitor/ios": "7.0.1",
     "@ionic/eslint-config": "^0.4.0",
-    "@ionic/prettier-config": "^1.0.1",
-    "@ionic/swiftlint-config": "^1.1.2",
-    "eslint": "^8.57.0",
-    "prettier": "~2.3.0",
-    "prettier-plugin-java": "~1.0.2",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.32.0",
-    "swiftlint": "^1.0.1",
-    "typescript": "~4.1.5"
+    "@ionic/prettier-config": "4.0.0",
+    "@ionic/swiftlint-config": "2.0.0",
+    "@types/node": "^22.13.1",
+    "eslint": "^9.19.0",
+    "prettier": "3.4.2",
+    "prettier-plugin-java": "~2.6.7",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.34.2",
+    "swiftlint": "^2.0.0",
+    "typescript": "~5.7.3"
   },
   "peerDependencies": {
     "@capacitor/core": "^7.0.0"

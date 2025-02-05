@@ -43,7 +43,7 @@ public class NostrSignerPlugin extends Plugin {
 		Context context = getContext();
 		List<AppInfo> signerAppInfos = Signer.getInstalledSignerApps(context);
 		JSArray appsArray = new JSArray();
-		for (SignerAppInfo signerAppInfo : signerAppInfos) {
+		for (AppInfo signerAppInfo : signerAppInfos) {
 			JSObject appInfo = new JSObject();
 			appInfo.put("name", signerAppInfo.name);
 			appInfo.put("packageName", signerAppInfo.packageName);

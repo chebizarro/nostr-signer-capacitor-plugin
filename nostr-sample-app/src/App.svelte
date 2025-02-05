@@ -2,7 +2,7 @@
   import { NostrSignerPlugin, type AppInfo } from 'nostr-signer-capacitor-plugin';
   import { Capacitor } from '@capacitor/core';
   import { onMount } from 'svelte';
-  import { getEventHash, type UnsignedEvent } from 'nostr-tools';
+  import { getEventHash } from 'nostr-tools';
   import * as nip19 from 'nostr-tools/nip19';
 
   let publicKey = '';
@@ -39,8 +39,7 @@
     if (Capacitor.getPlatform() === 'android') {
       try {
         await NostrSignerPlugin.setPackageName({ packageName });
-        const { installed } =
-          await NostrSignerPlugin.isExternalSignerInstalled();
+        const { installed } = await NostrSignerPlugin.isExternalSignerInstalled();
         signerInstalled = installed;
       } catch (error) {
         console.error('Error checking signer installation:', error);
@@ -64,16 +63,8 @@
   // Function to get the public key
   async function getPublicKey() {
     try {
-      if (
-        Capacitor.getPlatform() === 'web' &&
-        window.nostr &&
-        window.nostr.getPublicKey
-      ) {
-        publicKey = await window.nostr.getPublicKey();
-      } else {
-        const { npub } = await NostrSignerPlugin.getPublicKey();
-        publicKey = npub;
-      }
+      const { npub } = await NostrSignerPlugin.getPublicKey();
+      publicKey = npub;
     } catch (error) {
       console.error('Error getting public key:', error);
     }
@@ -94,24 +85,12 @@
       };
       let hash = getEventHash(event);
       event.id = hash;
-      if (
-        Capacitor.getPlatform() === 'web' &&
-        window.nostr &&
-        window.nostr.signEvent
-      ) {
-        signedEvent = JSON.stringify(
-          await window.nostr.signEvent(event),
-          null,
-          2,
-        );
-      } else {
-        const { event: signedEventJson } = await NostrSignerPlugin.signEvent({
-          eventJson: JSON.stringify(event),
-          eventId: hash,
-          npub: data,
-        });
-        signedEvent = JSON.stringify(JSON.parse(signedEventJson), null, 2);
-      }
+      const { event: signedEventJson } = await NostrSignerPlugin.signEvent({
+        eventJson: JSON.stringify(event),
+        eventId: hash,
+        npub: data,
+      });
+      signedEvent = JSON.stringify(JSON.parse(signedEventJson), null, 2);
     } catch (error) {
       console.error('Error signing event:', error);
     }
@@ -120,33 +99,21 @@
   // Function to encrypt a message
   async function encryptMessage() {
     try {
-      if (
-        Capacitor.getPlatform() === 'web' &&
-        window.nostr &&
-        window.nostr.nip04 &&
-        window.nostr.nip04.encrypt
-      ) {
-        encryptedMessage = await window.nostr.nip04.encrypt(
-          encryptPubKey,
-          messageToEncrypt,
-        );
+      let { data } = nip19.decode(encryptPubKey);
+      if (isScriptActive) {
+        const { result } = await NostrSignerPlugin.nip44Encrypt({
+          plainText: messageToEncrypt,
+          pubKey: data,
+          npub: publicKey,
+        });
+        encryptedMessage = result;
       } else {
-        let { data } = nip19.decode(encryptPubKey);
-        if (isScriptActive) {
-          const { result } = await NostrSignerPlugin.nip44Encrypt({
-            plainText: messageToEncrypt,
-            pubKey: data,
-            npub: publicKey,
-          });
-          encryptedMessage = result;
-        } else {
-          const { result } = await NostrSignerPlugin.nip04Encrypt({
-            plainText: messageToEncrypt,
-            pubKey: data,
-            npub: publicKey,
-          });
-          encryptedMessage = result;
-        }
+        const { result } = await NostrSignerPlugin.nip04Encrypt({
+          plainText: messageToEncrypt,
+          pubKey: data,
+          npub: publicKey,
+        });
+        encryptedMessage = result;
       }
     } catch (error) {
       console.error('Error encrypting message:', error);
@@ -156,33 +123,21 @@
   // Function to decrypt a message
   async function decryptMessage() {
     try {
-      if (
-        Capacitor.getPlatform() === 'web' &&
-        window.nostr &&
-        window.nostr.nip04 &&
-        window.nostr.nip04.decrypt
-      ) {
-        decryptedMessage = await window.nostr.nip04.decrypt(
-          encryptPubKey,
-          encryptedMessage,
-        );
+      let { data } = nip19.decode(encryptPubKey);
+      if (isScriptActive) {
+        const { result } = await NostrSignerPlugin.nip44Decrypt({
+          pubKey: data,
+          npub: publicKey,
+          encryptedText: encryptedMessage,
+        });
+        decryptedMessage = result;
       } else {
-        let { data } = nip19.decode(encryptPubKey);
-        if (isScriptActive) {
-          const { result } = await NostrSignerPlugin.nip44Decrypt({
-            pubKey: data,
-            npub: publicKey,
-            encryptedText: encryptedMessage,
-          });
-          decryptedMessage = result;
-        } else {
-          const { result } = await NostrSignerPlugin.nip04Decrypt({
-            pubKey: data,
-            npub: publicKey,
-            encryptedText: encryptedMessage,
-          });
-          decryptedMessage = result;
-        }
+        const { result } = await NostrSignerPlugin.nip04Decrypt({
+          pubKey: data,
+          npub: publicKey,
+          encryptedText: encryptedMessage,
+        });
+        decryptedMessage = result;
       }
     } catch (error) {
       console.error('Error decrypting message:', error);
@@ -212,9 +167,7 @@
 
     <hr />
 
-    <button on:click={getPublicKey} disabled={!signerInstalled}
-      >Get Public Key</button
-    >
+    <button on:click={getPublicKey} disabled={!signerInstalled}>Get Public Key</button>
     {#if publicKey}
       <div class="output">
         <strong>Public Key:</strong>
@@ -237,13 +190,8 @@
     <hr />
 
     <h2>Encryption</h2>
-    <input
-      type="text"
-      bind:value={encryptPubKey}
-      placeholder="Recipient Public Key"
-    />
-    <textarea bind:value={messageToEncrypt} placeholder="Message to Encrypt"
-    ></textarea>
+    <input type="text" bind:value={encryptPubKey} placeholder="Recipient Public Key" />
+    <textarea bind:value={messageToEncrypt} placeholder="Message to Encrypt"></textarea>
     <div class="toggle-container">
       <label class="switch">
         <input type="checkbox" bind:checked={isScriptActive} />
@@ -253,12 +201,8 @@
     </div>
 
     <div class="button-container">
-      <button on:click={encryptMessage} disabled={!signerInstalled}
-        >Encrypt Message</button
-      >
-      <button on:click={decryptMessage} disabled={!signerInstalled}
-        >Decrypt Message</button
-      >
+      <button on:click={encryptMessage} disabled={!signerInstalled}>Encrypt Message</button>
+      <button on:click={decryptMessage} disabled={!signerInstalled}>Decrypt Message</button>
     </div>
     {#if encryptedMessage}
       <div class="output">
