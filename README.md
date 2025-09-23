@@ -9,6 +9,47 @@ npm install nostr-signer-capacitor-plugin
 npx cap sync
 ```
 
+## Requirements
+
+- Android: minSdkVersion 23 or higher.
+- Java 21 (JDK 21) for building Android with Gradle.
+- Capacitor 7.x.
+
+## Version
+
+Current version: 0.0.5
+
+### 0.0.5 (2025-09-22)
+
+- Bumped Android `minSdkVersion` to 23 to align with Capacitor Android requirements.
+- Added Android unit tests (Robolectric) covering Content Resolver flows and rejected-provider fallback.
+- Added npm scripts:
+  - `test:ts` – runs TypeScript/Jest tests
+  - `test:android` – runs Android unit tests (`testDebugUnitTest`)
+  - `test:all` (default `npm test`) – runs both suites
+- Added GitHub Actions workflow at `.github/workflows/ci.yml` to run JS and Android unit tests in CI.
+
+## Testing
+
+Run TypeScript tests:
+
+```bash
+npm run test:ts
+```
+
+Run Android unit tests:
+
+```bash
+cd android
+./gradlew clean testDebugUnitTest --no-daemon --stacktrace --info --console=plain
+```
+
+Run all tests:
+
+```bash
+npm test
+```
+
 ## Usage
 
 ### Import the Plugin

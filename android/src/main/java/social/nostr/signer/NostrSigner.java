@@ -46,147 +46,261 @@ public class NostrSigner {
 		ContentResolver contentResolver = context.getContentResolver();
 		Uri uri = Uri.parse("content://" + packageName + ".GET_PUBLIC_KEY");
 		String[] projection = new String[] { "login" };
-		Cursor result = contentResolver.query(uri, projection, null, null, null);
-		if (result == null) {
-			return null;
-		}
-		String npub = null;
-		if (result.moveToFirst()) {
-			int index = result.getColumnIndex("signature");
-			if (index >= 0) {
-				npub = result.getString(index);
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String npub = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						// Provider rejected; signal fallback/soft failure
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					npub = result.getString(index);
+				}
+			}
+			return npub;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return npub;
 	}
 
 	public String[] signEvent(Context context, String packageName, String eventJson, String loggedInUserNpub) {
 		Uri uri = Uri.parse("content://" + packageName + ".SIGN_EVENT");
 		String[] projection = new String[] { eventJson, "", loggedInUserNpub };
 		ContentResolver contentResolver = context.getContentResolver();
-		Cursor result = contentResolver.query(uri, projection, "1", null, null);
-		if (result == null) {
-			return null;
-		}
-		String[] signedEvent = null;
-		if (result.moveToFirst()) {
-			int signatureIndex = result.getColumnIndex("signature");
-			int eventIndex = result.getColumnIndex("event");
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, "1", null, null);
+			if (result == null) {
+				return null;
+			}
+			String[] signedEvent = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int signatureIndex = result.getColumnIndex("signature");
+				int eventIndex = result.getColumnIndex("event");
 
-			if (signatureIndex >= 0 && eventIndex >= 0) {
-				String signature = result.getString(signatureIndex);
-				String signedEventJson = result.getString(eventIndex);
-				signedEvent = new String[]{signature, signedEventJson};
+				if (signatureIndex >= 0 && eventIndex >= 0) {
+					String signature = result.getString(signatureIndex);
+					String signedEventJson = result.getString(eventIndex);
+					signedEvent = new String[]{signature, signedEventJson};
+				}
+			}
+			return signedEvent;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return signedEvent;
 	}
 
 	public String nip04Encrypt(Context context, String packageName, String plainText, String recipientPubKey, String loggedInUserNpub) {
 		ContentResolver contentResolver = context.getContentResolver();
 		Uri uri = Uri.parse("content://" + packageName + ".NIP04_ENCRYPT");
 		String[] projection = new String[] { plainText, recipientPubKey, loggedInUserNpub };
-		Cursor result = contentResolver.query(uri, projection, null, null, null);
-
-		if (result == null) {
-			return null;
-		}
-
-		String encryptedText = null;
-		if (result.moveToFirst()) {
-			int index = result.getColumnIndex("signature");
-			if (index >= 0) {
-				encryptedText = result.getString(index);
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String encryptedText = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					encryptedText = result.getString(index);
+				}
+			}
+			return encryptedText;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return encryptedText;
 	}
 
 	public String nip04Decrypt(Context context, String packageName, String encryptedText, String senderPubKey, String loggedInUserNpub) {
 		ContentResolver contentResolver = context.getContentResolver();
 		Uri uri = Uri.parse("content://" + packageName + ".NIP04_DECRYPT");
 		String[] projection = new String[] { encryptedText, senderPubKey, loggedInUserNpub };
-		Cursor result = contentResolver.query(uri, projection, null, null, null);
-
-		if (result == null) {
-			return null;
-		}
-
-		String decryptedText = null;
-		if (result.moveToFirst()) {
-			int index = result.getColumnIndex("signature");
-			if (index >= 0) {
-				decryptedText = result.getString(index);
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String decryptedText = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					decryptedText = result.getString(index);
+				}
+			}
+			return decryptedText;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return decryptedText;
 	}
 
 	public String nip44Encrypt(Context context, String packageName, String plainText, String recipientPubKey, String loggedInUserNpub) {
 		ContentResolver contentResolver = context.getContentResolver();
 		Uri uri = Uri.parse("content://" + packageName + ".NIP44_ENCRYPT");
 		String[] projection = new String[] { plainText, recipientPubKey, loggedInUserNpub };
-		Cursor result = contentResolver.query(uri, projection, null, null, null);
-
-		if (result == null) {
-			return null;
-		}
-
-		String encryptedText = null;
-		if (result.moveToFirst()) {
-			int index = result.getColumnIndex("signature");
-			if (index >= 0) {
-				encryptedText = result.getString(index);
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String encryptedText = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					encryptedText = result.getString(index);
+				}
+			}
+			return encryptedText;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return encryptedText;
 	}
 
 	public String nip44Decrypt(Context context, String packageName, String encryptedText, String senderPubKey, String loggedInUserNpub) {
 		ContentResolver contentResolver = context.getContentResolver();
 		Uri uri = Uri.parse("content://" + packageName + ".NIP44_DECRYPT");
 		String[] projection = new String[] { encryptedText, senderPubKey, loggedInUserNpub };
-		Cursor result = contentResolver.query(uri, projection, null, null, null);
-
-		if (result == null) {
-			return null;
-		}
-
-		String decryptedText = null;
-		if (result.moveToFirst()) {
-			int index = result.getColumnIndex("signature");
-			if (index >= 0) {
-				decryptedText = result.getString(index);
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String decryptedText = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					decryptedText = result.getString(index);
+				}
+			}
+			return decryptedText;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return decryptedText;
 	}
 
 	public String decryptZapEvent(Context context, String packageName, String eventJson, String loggedInUserNpub) {
 		ContentResolver contentResolver = context.getContentResolver();
 		Uri uri = Uri.parse("content://" + packageName + ".DECRYPT_ZAP_EVENT");
 		String[] projection = new String[] { eventJson, "", loggedInUserNpub };
-		Cursor result = contentResolver.query(uri, projection, null, null, null);
-
-		if (result == null) {
-			return null;
-		}
-
-		String decryptedEventJson = null;
-		if (result.moveToFirst()) {
-			int index = result.getColumnIndex("signature");
-			if (index >= 0) {
-				decryptedEventJson = result.getString(index);
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String decryptedEventJson = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					decryptedEventJson = result.getString(index);
+				}
+			}
+			return decryptedEventJson;
+		} finally {
+			if (result != null) {
+				result.close();
 			}
 		}
-		result.close();
-		return decryptedEventJson;
+	}
+
+	public String getRelays(Context context, String packageName, String id, String loggedInUserNpub) {
+		ContentResolver contentResolver = context.getContentResolver();
+		Uri uri = Uri.parse("content://" + packageName + ".GET_RELAYS");
+		String[] projection = new String[] { id, "", loggedInUserNpub };
+		Cursor result = null;
+		try {
+			result = contentResolver.query(uri, projection, null, null, null);
+			if (result == null) {
+				return null;
+			}
+			String relays = null;
+			if (result.moveToFirst()) {
+				int rejectedIdx = result.getColumnIndex("rejected");
+				if (rejectedIdx >= 0) {
+					String rejectedVal = result.getString(rejectedIdx);
+					if ("1".equals(rejectedVal) || "true".equalsIgnoreCase(rejectedVal)) {
+						return null;
+					}
+				}
+				int index = result.getColumnIndex("signature");
+				if (index >= 0) {
+					relays = result.getString(index);
+				}
+			}
+			return relays;
+		} finally {
+			if (result != null) {
+				result.close();
+			}
+		}
 	}
 
 }

@@ -32,8 +32,9 @@ public class NostrSignerPlugin extends Plugin {
 	@PluginMethod
 	public void isExternalSignerInstalled(PluginCall call) {
 		Context context = getContext();
-		String packageName = call.getString("packageName");
-		List<ResolveInfo> signers = implementation.isExternalSignerInstalled(context, signerPackageName);
+		String requested = call.getString("packageName");
+		String effectivePackage = (requested != null && !requested.isEmpty()) ? requested : signerPackageName;
+		List<ResolveInfo> signers = implementation.isExternalSignerInstalled(context, effectivePackage);
 		boolean isInstalled = !signers.isEmpty();
 		JSObject ret = new JSObject();
 		ret.put("installed", isInstalled);
@@ -49,8 +50,10 @@ public class NostrSignerPlugin extends Plugin {
 			JSObject appInfo = new JSObject();
 			appInfo.put("name", signerAppInfo.name);
 			appInfo.put("packageName", signerAppInfo.packageName);
-			appInfo.put("iconData", signerAppInfo.iconData);
-			appInfo.put("iconUrl", signerAppInfo.iconUrl);
+			// Avoid large payloads across the bridge; iconUrl may be provided if lightweight/safe
+			if (signerAppInfo.iconUrl != null && !signerAppInfo.iconUrl.isEmpty()) {
+				appInfo.put("iconUrl", signerAppInfo.iconUrl);
+			}
 			appsArray.put(appInfo);
 		}
 		JSObject ret = new JSObject();
@@ -85,7 +88,7 @@ public class NostrSignerPlugin extends Plugin {
 			return;
 		}
 		Context context = getContext();
-		String publicKey = implementation.getPublicKey(context, signerPackageName);
+		String publicKey = implementation.getPublicKey(context, packageName);
 		if (publicKey != null) {
 			JSObject ret = new JSObject();
 			ret.put("npub", publicKey);
@@ -107,16 +110,20 @@ public class NostrSignerPlugin extends Plugin {
 	@ActivityCallback
 	private void getPublicKeyResult(PluginCall call, ActivityResult result) {
 		if (result.getResultCode() == Activity.RESULT_CANCELED) {
-			call.reject("Activity Cancelled");
-		} else {
-			Intent data = result.getData();
-			JSObject ret = new JSObject();
-			String npub = data.getStringExtra("signature");
-			String packageName = data.getStringExtra("package");
-			ret.put("npub", npub);
-			ret.put("package", packageName);
-			call.resolve(ret);
+			call.reject("Activity Cancelled", "CANCELLED", (JSObject) null);
+			return;
 		}
+		Intent data = result.getData();
+		if (data == null) {
+			call.reject("No data returned", "INTENT_FAILED", (JSObject) null);
+			return;
+		}
+		JSObject ret = new JSObject();
+		String npub = data.getStringExtra("signature");
+		String packageName = data.getStringExtra("package");
+		ret.put("npub", npub);
+		ret.put("package", packageName);
+		call.resolve(ret);
 	}
 
 	@PluginMethod
@@ -155,18 +162,22 @@ public class NostrSignerPlugin extends Plugin {
 	@ActivityCallback
 	private void signEventActivity(PluginCall call, ActivityResult result) {
 		if (result.getResultCode() == Activity.RESULT_CANCELED) {
-			call.reject("Activity Cancelled");
-		} else {
-			Intent data = result.getData();
-			JSObject ret = new JSObject();
-			String signature = data.getStringExtra("signature");
-			String id = data.getStringExtra("id");
-			String signedEventJson = data.getStringExtra("event");
-			ret.put("signature", signature);
-			ret.put("id", id);
-			ret.put("event", signedEventJson);
-			call.resolve(ret);
+			call.reject("Activity Cancelled", "CANCELLED", (JSObject) null);
+			return;
 		}
+		Intent data = result.getData();
+		if (data == null) {
+			call.reject("No data returned", "INTENT_FAILED", (JSObject) null);
+			return;
+		}
+		JSObject ret = new JSObject();
+		String signature = data.getStringExtra("signature");
+		String id = data.getStringExtra("id");
+		String signedEventJson = data.getStringExtra("event");
+		ret.put("signature", signature);
+		ret.put("id", id);
+		ret.put("event", signedEventJson);
+		call.resolve(ret);
 	}
 
 	@PluginMethod
@@ -194,7 +205,7 @@ public class NostrSignerPlugin extends Plugin {
 			call.resolve(ret);
 		} else {
 			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + plainText));
-			intent.setPackage(signerPackageName);
+			intent.setPackage(packageName);
 			intent.putExtra("type", "nip04_encrypt");
 			intent.putExtra("id", id);
 			intent.putExtra("current_user", npub);
@@ -206,16 +217,20 @@ public class NostrSignerPlugin extends Plugin {
 	@ActivityCallback
 	private void encryptEventActivity(PluginCall call, ActivityResult result) {
 		if (result.getResultCode() == Activity.RESULT_CANCELED) {
-			call.reject("Activity Cancelled");
-		} else {
-			Intent data = result.getData();
-			JSObject ret = new JSObject();
-			String res = data.getStringExtra("signature");
-			String resultId = data.getStringExtra("id");
-			ret.put("result", res);
-			ret.put("id", resultId);
-			call.resolve(ret);
+			call.reject("Activity Cancelled", "CANCELLED", (JSObject) null);
+			return;
 		}
+		Intent data = result.getData();
+		if (data == null) {
+			call.reject("No data returned", "INTENT_FAILED", (JSObject) null);
+			return;
+		}
+		JSObject ret = new JSObject();
+		String res = data.getStringExtra("signature");
+		String resultId = data.getStringExtra("id");
+		ret.put("result", res);
+		ret.put("id", resultId);
+		call.resolve(ret);
 	}
 
 	@PluginMethod
@@ -317,7 +332,7 @@ public class NostrSignerPlugin extends Plugin {
 			call.resolve(ret);
 		} else {
 			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + encryptedText));
-			intent.setPackage(signerPackageName);
+			intent.setPackage(packageName);
 			intent.putExtra("type", "nip44_decrypt");
 			intent.putExtra("id", id);
 			intent.putExtra("current_user", npub);
@@ -353,8 +368,38 @@ public class NostrSignerPlugin extends Plugin {
 			call.resolve(ret);
 		} else {
 			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:" + eventJson));
-			intent.setPackage(signerPackageName);
+			intent.setPackage(packageName);
 			intent.putExtra("type", "decrypt_zap_event");
+			intent.putExtra("id", id);
+			intent.putExtra("current_user", npub);
+			startActivityForResult(call, intent, "encryptEventActivity");
+		}
+	}
+
+	@PluginMethod
+	public void getRelays(PluginCall call) {
+		String packageName = getPackageName(call);
+		if (packageName == null || packageName.isEmpty()) {
+			call.reject("Signer package name not set. Call setPackageName first.");
+			return;
+		}
+		String id = call.getString("id");
+		String npub = call.getString("npub");
+		if (id == null || npub == null) {
+			call.reject("Missing parameters");
+			return;
+		}
+		Context context = getContext();
+		String relays = implementation.getRelays(context, packageName, id, npub);
+		if (relays != null) {
+			JSObject ret = new JSObject();
+			ret.put("result", relays);
+			ret.put("id", id);
+			call.resolve(ret);
+		} else {
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"));
+			intent.setPackage(packageName);
+			intent.putExtra("type", "get_relays");
 			intent.putExtra("id", id);
 			intent.putExtra("current_user", npub);
 			startActivityForResult(call, intent, "encryptEventActivity");
