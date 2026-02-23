@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import { NostrSignerPlugin, buildPermissionsJson } from '../index';
 
 // Mock Capacitor core
@@ -9,7 +11,9 @@ jest.mock('@capacitor/core', () => {
     registerPlugin: jest.fn(() => ({
       setPackageName: jest.fn(async () => {}),
       isExternalSignerInstalled: jest.fn(async () => ({ installed: true })),
-      getInstalledSignerApps: jest.fn(async () => ({ apps: [{ name: 'Signer', packageName: 'com.signer', iconUrl: 'data:image/png;base64,x' }] })),
+      getInstalledSignerApps: jest.fn(async () => ({
+        apps: [{ name: 'Signer', packageName: 'com.signer', iconUrl: 'data:image/png;base64,x' }],
+      })),
       getPublicKey: jest.fn(async () => ({ npub: 'npub1...', package: 'com.signer' })),
       signEvent: jest.fn(async () => ({ signature: 'sig', id: '1', event: '{"k":1}' })),
       nip04Encrypt: jest.fn(async () => ({ result: 'enc', id: '1' })),
@@ -28,7 +32,10 @@ describe('TS bridge', () => {
   });
 
   it('getPublicKey serializes permissions when array', async () => {
-    await expect(NostrSignerPlugin.getPublicKey('com.signer', [{ type: 'get_public_key' }])).resolves.toEqual({ npub: 'npub1...', package: 'com.signer' });
+    await expect(NostrSignerPlugin.getPublicKey('com.signer', [{ type: 'get_public_key' }])).resolves.toEqual({
+      npub: 'npub1...',
+      package: 'com.signer',
+    });
   });
 
   it('signEvent passes through result', async () => {
@@ -37,9 +44,8 @@ describe('TS bridge', () => {
   });
 
   it('Android-only guard rejects on non-android', async () => {
-    const core = require('@capacitor/core');
-    core.Capacitor.getPlatform.mockReturnValue('web');
+    (Capacitor.getPlatform as jest.Mock).mockReturnValue('web');
     await expect(NostrSignerPlugin.getInstalledSignerApps()).rejects.toThrowError();
-    core.Capacitor.getPlatform.mockReturnValue('android');
+    (Capacitor.getPlatform as jest.Mock).mockReturnValue('android');
   });
 });
