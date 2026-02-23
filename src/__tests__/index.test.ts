@@ -17,7 +17,6 @@ jest.mock('@capacitor/core', () => {
       nip44Encrypt: jest.fn(async () => ({ result: 'enc44', id: '1' })),
       nip44Decrypt: jest.fn(async () => ({ result: 'dec44', id: '1' })),
       decryptZapEvent: jest.fn(async () => ({ result: '{"ok":true}', id: '1' })),
-      getRelays: jest.fn(async () => ({ result: '["wss://relay.example.com"]', id: '1' })),
     })),
   };
 });

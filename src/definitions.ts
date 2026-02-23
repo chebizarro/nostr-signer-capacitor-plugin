@@ -78,12 +78,6 @@ export interface NostrSignerNative {
     npub: string;
     id?: string;
   }): Promise<{ result: string; id: string }>;
-
-  getRelays(options: {
-    packageName?: string;
-    id: string;
-    npub: string;
-  }): Promise<{ result: string; id: string }>;
 }
 
 // Public JS API surface types

@@ -17,38 +17,27 @@ public class TestCursorProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         String authority = uri.getAuthority();
         if (authority == null) return null;
-        String[] cols;
         MatrixCursor c;
         if (authority.endsWith("GET_PUBLIC_KEY")) {
-            cols = new String[]{"signature"};
-            c = new MatrixCursor(cols);
+            c = new MatrixCursor(new String[]{"result"});
             c.addRow(new Object[]{"npub1testpublickey"});
             return c;
         } else if (authority.endsWith("SIGN_EVENT")) {
-            cols = new String[]{"signature", "event"};
-            c = new MatrixCursor(cols);
+            c = new MatrixCursor(new String[]{"result", "event"});
             String event = projection != null && projection.length > 0 ? projection[0] : "{}";
             c.addRow(new Object[]{"signaturehex", event});
             return c;
         } else if (authority.endsWith("NIP04_ENCRYPT") || authority.endsWith("NIP44_ENCRYPT")) {
-            cols = new String[]{"signature"};
-            c = new MatrixCursor(cols);
+            c = new MatrixCursor(new String[]{"result"});
             c.addRow(new Object[]{"encrypted"});
             return c;
         } else if (authority.endsWith("NIP04_DECRYPT") || authority.endsWith("NIP44_DECRYPT")) {
-            cols = new String[]{"signature"};
-            c = new MatrixCursor(cols);
+            c = new MatrixCursor(new String[]{"result"});
             c.addRow(new Object[]{"decrypted"});
             return c;
         } else if (authority.endsWith("DECRYPT_ZAP_EVENT")) {
-            cols = new String[]{"signature"};
-            c = new MatrixCursor(cols);
+            c = new MatrixCursor(new String[]{"result"});
             c.addRow(new Object[]{"{\"result\":true}"});
-            return c;
-        } else if (authority.endsWith("GET_RELAYS")) {
-            cols = new String[]{"signature"};
-            c = new MatrixCursor(cols);
-            c.addRow(new Object[]{"[\"wss://relay.example.com\"]"});
             return c;
         }
         return null;

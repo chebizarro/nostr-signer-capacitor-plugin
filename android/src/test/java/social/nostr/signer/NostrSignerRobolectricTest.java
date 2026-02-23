@@ -2,19 +2,17 @@ package social.nostr.signer;
 
 import static org.junit.Assert.*;
 
+import android.content.ContentProvider;
 import android.content.pm.ProviderInfo;
-import android.net.Uri;
 
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.Shadows;
-import org.robolectric.android.controller.ActivityController;
 import org.robolectric.shadows.ShadowContentResolver;
 
 @RunWith(RobolectricTestRunner.class)
@@ -29,38 +27,19 @@ public class NostrSignerRobolectricTest {
         shadowResolver = Shadows.shadowOf(ApplicationProvider.getApplicationContext().getContentResolver());
         packageName = ApplicationProvider.getApplicationContext().getPackageName();
 
-        // Register providers per authority for success path
+        registerProvider(packageName + ".GET_PUBLIC_KEY", new TestCursorProvider());
+        registerProvider(packageName + ".SIGN_EVENT", new TestCursorProvider());
+        registerProvider(packageName + ".NIP04_ENCRYPT", new TestCursorProvider());
+        registerProvider(packageName + ".NIP04_DECRYPT", new TestCursorProvider());
+        registerProvider(packageName + ".NIP44_ENCRYPT", new TestCursorProvider());
+        registerProvider(packageName + ".NIP44_DECRYPT", new TestCursorProvider());
+        registerProvider(packageName + ".DECRYPT_ZAP_EVENT", new TestCursorProvider());
+    }
+
+    private void registerProvider(String authority, ContentProvider provider) {
         ProviderInfo info = new ProviderInfo();
-        info.authority = packageName + ".GET_PUBLIC_KEY";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".SIGN_EVENT";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".NIP04_ENCRYPT";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".NIP04_DECRYPT";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".NIP44_ENCRYPT";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".NIP44_DECRYPT";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".DECRYPT_ZAP_EVENT";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
-
-        info = new ProviderInfo();
-        info.authority = packageName + ".GET_RELAYS";
-        shadowResolver.registerProviderInternal(info.authority, new TestCursorProvider());
+        info.authority = authority;
+        shadowResolver.registerProviderInternal(authority, provider);
     }
 
     @Test
@@ -116,22 +95,11 @@ public class NostrSignerRobolectricTest {
     }
 
     @Test
-    public void getRelays_resolverReturnsList() {
-        NostrSigner signer = new NostrSigner();
-        String res = signer.getRelays(ApplicationProvider.getApplicationContext(), packageName, "id-1", "npub");
-        assertEquals("[\"wss://relay.example.com\"]", res);
-    }
-
-    @Test
-    public void providerRejected_returnsNullToTriggerIntentFallback() {
-        // Re-register a provider that always rejects for GET_PUBLIC_KEY
-        ProviderInfo info = new ProviderInfo();
-        String authority = packageName + ".GET_PUBLIC_KEY";
-        info.authority = authority;
-        shadowResolver.registerProviderInternal(authority, new TestRejectedCursorProvider());
+    public void providerRejected_returnsSentinel() {
+        registerProvider(packageName + ".GET_PUBLIC_KEY", new TestRejectedCursorProvider());
 
         NostrSigner signer = new NostrSigner();
-        String npub = signer.getPublicKey(ApplicationProvider.getApplicationContext(), packageName);
-        assertNull(npub);
+        String result = signer.getPublicKey(ApplicationProvider.getApplicationContext(), packageName);
+        assertEquals(NostrSigner.REJECTED, result);
     }
 }

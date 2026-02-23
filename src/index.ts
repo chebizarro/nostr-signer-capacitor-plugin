@@ -134,18 +134,6 @@ export const NostrSignerPlugin = {
     }
     return native.decryptZapEvent({ packageName, eventJson, npub, id });
   },
-
-  async getRelays(
-    packageName: string,
-    id: string,
-    npub: string,
-  ): Promise<{ result: string; id: string }> {
-    ensureAndroid();
-    if (!id || !npub) {
-      throw new Error('MISSING_PARAMS: id,npub');
-    }
-    return native.getRelays({ packageName, id, npub });
-  },
 };
 
 export type { AppInfo, Permission };
