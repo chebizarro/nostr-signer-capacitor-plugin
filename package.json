@@ -55,14 +55,14 @@
     "release:dry": "npm run build && npm test && npm publish --dry-run"
   },
   "devDependencies": {
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
     "@capacitor/docgen": "^0.2.2",
-    "@capacitor/ios": "^7.0.0",
-    "@types/jest": "^29.5.12",
+    "@capacitor/ios": "^8.1.0",
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^1.0.1",
     "@ionic/swiftlint-config": "^1.1.2",
+    "@types/jest": "^29.5.12",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "prettier": "~2.3.0",
@@ -74,7 +74,7 @@
     "typescript": "^5.4.0"
   },
   "peerDependencies": {
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/core": "^8.0.0"
   },
   "prettier": "@ionic/prettier-config",
   "swiftlint": "@ionic/swiftlint-config",
