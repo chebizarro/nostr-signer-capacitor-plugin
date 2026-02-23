@@ -41,7 +41,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Cache Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Run Android unit tests
         run: |
