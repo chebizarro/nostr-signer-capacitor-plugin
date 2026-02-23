@@ -122,7 +122,7 @@ public class NostrSignerPlugin extends Plugin {
 			call.reject("No data returned", "INTENT_FAILED", (JSObject) null);
 			return;
 		}
-		String npub = data.getStringExtra("result");
+		String npub = NostrSigner.npubToHex(data.getStringExtra("result"));
 		String packageName = data.getStringExtra("package");
 		JSObject ret = new JSObject();
 		ret.put("npub", npub);

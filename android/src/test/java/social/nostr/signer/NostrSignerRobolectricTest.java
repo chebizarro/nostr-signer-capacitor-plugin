@@ -43,10 +43,23 @@ public class NostrSignerRobolectricTest {
     }
 
     @Test
-    public void getPublicKey_resolverReturnsNpub() {
+    public void npubToHex_decodesKnownVector() {
+        String hex = NostrSigner.npubToHex("npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6");
+        assertEquals("3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", hex);
+    }
+
+    @Test
+    public void npubToHex_passthroughForHex() {
+        String hex = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d";
+        assertEquals(hex, NostrSigner.npubToHex(hex));
+    }
+
+    @Test
+    public void getPublicKey_resolverDecodesNpubToHex() {
         NostrSigner signer = new NostrSigner();
-        String npub = signer.getPublicKey(ApplicationProvider.getApplicationContext(), packageName);
-        assertEquals("npub1testpublickey", npub);
+        String result = signer.getPublicKey(ApplicationProvider.getApplicationContext(), packageName);
+        // Provider returns an npub; plugin must decode it to hex for use as current_user.
+        assertEquals("3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", result);
     }
 
     @Test

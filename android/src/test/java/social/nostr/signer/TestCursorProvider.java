@@ -20,7 +20,7 @@ public class TestCursorProvider extends ContentProvider {
         MatrixCursor c;
         if (authority.endsWith("GET_PUBLIC_KEY")) {
             c = new MatrixCursor(new String[]{"result"});
-            c.addRow(new Object[]{"npub1testpublickey"});
+            c.addRow(new Object[]{"npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6"});
             return c;
         } else if (authority.endsWith("SIGN_EVENT")) {
             c = new MatrixCursor(new String[]{"result", "event"});
