@@ -56,7 +56,10 @@ repositories {
 
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    def libsDir = file('libs')
+    if (libsDir.exists()) {
+        implementation fileTree(dir: libsDir, include: ['*.jar'])
+    }
     implementation project(':capacitor-android')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     testImplementation "junit:junit:$junitVersion"
