@@ -23,9 +23,7 @@ export interface Permission {
 // Native bridge interface (Android implementation)
 export interface NostrSignerNative {
   setPackageName(options: { packageName: string }): Promise<void>;
-  isExternalSignerInstalled(options?: {
-    packageName?: string;
-  }): Promise<{ installed: boolean }>;
+  isExternalSignerInstalled(options?: { packageName?: string }): Promise<{ installed: boolean }>;
   getInstalledSignerApps(): Promise<{ apps: SignerAppInfo[] }>;
 
   getPublicKey(options?: {
@@ -78,13 +76,6 @@ export interface NostrSignerNative {
     npub: string;
     id?: string;
   }): Promise<{ result: string; id: string }>;
-
-  getRelays(options: {
-    packageName?: string;
-    id: string;
-    npub: string;
-  }): Promise<{ result: string; id: string }>;
 }
 
 // Public JS API surface types
-

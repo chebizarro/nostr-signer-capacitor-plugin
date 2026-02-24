@@ -1,9 +1,5 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import type {
-  NostrSignerNative,
-  Permission,
-  SignerAppInfo as AppInfo,
-} from './definitions';
+import type { NostrSignerNative, Permission, SignerAppInfo as AppInfo } from './definitions';
 
 const native = registerPlugin<NostrSignerNative>('NostrSignerPlugin');
 
@@ -18,8 +14,7 @@ const ensureAndroid = () => {
   }
 };
 
-export const buildPermissionsJson = (perms: Permission[]) =>
-  JSON.stringify(perms ?? []);
+export const buildPermissionsJson = (perms: Permission[]): string => JSON.stringify(perms ?? []);
 
 function normalizePermissions(permissions?: Permission[] | string): string | undefined {
   if (permissions == null) return undefined;
@@ -133,18 +128,6 @@ export const NostrSignerPlugin = {
       throw new Error('MISSING_PARAMS: eventJson,npub');
     }
     return native.decryptZapEvent({ packageName, eventJson, npub, id });
-  },
-
-  async getRelays(
-    packageName: string,
-    id: string,
-    npub: string,
-  ): Promise<{ result: string; id: string }> {
-    ensureAndroid();
-    if (!id || !npub) {
-      throw new Error('MISSING_PARAMS: id,npub');
-    }
-    return native.getRelays({ packageName, id, npub });
   },
 };
 

@@ -3,14 +3,14 @@ import PackageDescription
 
 let package = Package(
     name: "NostrSignerCapacitorPlugin",
-    platforms: [.iOS(.v13)],
+    platforms: [.iOS(.v15)],
     products: [
         .library(
             name: "NostrSignerCapacitorPlugin",
             targets: ["NostrSignerPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", branch: "main")
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0")
     ],
     targets: [
         .target(
