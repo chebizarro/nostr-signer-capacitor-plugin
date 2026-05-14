@@ -11,13 +11,27 @@ npx cap sync
 
 ## Requirements
 
-- Android: minSdkVersion 23 or higher.
+- Android: minSdkVersion 24 or higher.
+- iOS: deployment target 15.0 or higher.
 - Java 21 (JDK 21) for building Android with Gradle.
-- Capacitor 7.x.
+- Node.js 22 or higher.
+- Capacitor 8.x.
 
 ## Version
 
-Current version: 0.0.5
+Current version: 0.1.0
+
+### 0.1.0 (2026-05-14)
+
+- Upgraded plugin metadata and native build configuration for Capacitor 8.
+- Updated sample app Capacitor dependencies to 8.x.
+- Bumped Android `versionName` to `0.1.0` and `versionCode` to `6`.
+
+### Capacitor 8 compatibility
+
+- Targets Capacitor 8 because the v8 Swift Package Manager dependency cannot also resolve Capacitor 7.
+- Uses Android compileSdk/targetSdk 36, minSdk 24, AGP 8.13.0, and Gradle 8.14.3.
+- Uses iOS deployment target 15.0 and Capacitor SPM dependency 8.0.0+.
 
 ### 0.0.5 (2025-09-22)
 
