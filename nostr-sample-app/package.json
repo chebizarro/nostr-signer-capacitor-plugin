@@ -14,9 +14,9 @@
     "vite": "^5.4.1"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/cli": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
     "nostr-signer-capacitor-plugin": "file:../../nostr-signer-capacitor-plugin",
     "nostr-tools": "^2.7.2",
     "svelte-routing": "^2.13.0"

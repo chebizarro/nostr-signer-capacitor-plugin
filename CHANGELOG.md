@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0] - 2026-05-14
+
+### Changed
+- Upgraded the plugin to target Capacitor 8.
+- Updated Capacitor peer dependency to `>=8.0.0` and added `@capacitor/cli` as a dev dependency.
+- Raised documented platform requirements to Node.js 22, Android min SDK 24, and iOS deployment target 15.0.
+- Updated the sample app to Capacitor 8 dependencies.
+- Bumped Android `versionName` to `0.1.0` and `versionCode` to `6`.
+
+### Fixed
+- Corrected Swift Package Manager source and test target paths to match the repository layout.
+
 ## [0.0.5] - 2025-09-22
 
 ### Added
@@ -24,4 +36,3 @@ All notable changes to this project will be documented in this file.
 
 ## [0.0.4] - 2025-xx-xx
 - Previous release notes.
-
